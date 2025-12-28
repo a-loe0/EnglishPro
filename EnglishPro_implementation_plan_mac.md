@@ -186,16 +186,11 @@ FFMPEG_PATH="/opt/homebrew/bin/ffmpeg"
 | Run seed | `npx prisma db seed` |
 
 **Sample data created:**
+- 1 Teacher account
+- 2 Student accounts
+- 3 Sample courses (Beginner English, Business English, Conversation Practice)
 
-| Type | Email | Password | Name |
-|------|-------|----------|------|
-| Teacher | teacher@englishpro.com | teacher123 | Demo Teacher |
-| Student | student1@englishpro.com | student123 | Alice Student |
-| Student | student2@englishpro.com | student123 | Bob Student |
-
-**Sample courses:**
-- "Beginner English" - Learn the basics of English language
-- "Business English" - English for professional environments
+**Credentials:** Saved to `.credentials` file (excluded from git)
 
 ---
 

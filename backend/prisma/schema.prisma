@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TEACHER
+  STUDENT
+}
+
+enum SubmissionStatus {
+  PENDING
+  REVIEWED
+}
+
+enum VideoStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         Role
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  courses     Course[]     @relation("TeacherCourses")
+  videos      Video[]      @relation("TeacherVideos")
+  submissions Submission[] @relation("StudentSubmissions")
+  progress    Progress[]   @relation("StudentProgress")
+
+  @@map("users")
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  teacherId   String   @map("teacher_id")
+  title       String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  teacher User    @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: Cascade)
+  videos  Video[]
+
+  @@map("courses")
+}
+
+model Video {
+  id           String      @id @default(uuid())
+  teacherId    String      @map("teacher_id")
+  courseId     String?     @map("course_id")
+  title        String
+  description  String?
+  videoUrl     String      @map("video_url")
+  hlsUrl       String?     @map("hls_url")
+  thumbnailUrl String?     @map("thumbnail_url")
+  duration     Int?        // Duration in seconds
+  status       VideoStatus @default(PROCESSING)
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  teacher     User         @relation("TeacherVideos", fields: [teacherId], references: [id], onDelete: Cascade)
+  course      Course?      @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  submissions Submission[]
+  progress    Progress[]
+
+  @@map("videos")
+}
+
+model Submission {
+  id            String           @id @default(uuid())
+  studentId     String           @map("student_id")
+  videoId       String           @map("video_id")
+  submissionUrl String           @map("submission_url")
+  status        SubmissionStatus @default(PENDING)
+  grade         Int?
+  feedback      String?
+  submittedAt   DateTime         @default(now()) @map("submitted_at")
+  reviewedAt    DateTime?        @map("reviewed_at")
+
+  // Relations
+  student User  @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
+  video   Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@map("submissions")
+}
+
+model Progress {
+  id              String   @id @default(uuid())
+  studentId       String   @map("student_id")
+  videoId         String   @map("video_id")
+  watchPercentage Float    @default(0) @map("watch_percentage")
+  completed       Boolean  @default(false)
+  lastWatchedAt   DateTime @default(now()) @map("last_watched_at")
+
+  // Relations
+  student User  @relation("StudentProgress", fields: [studentId], references: [id], onDelete: Cascade)
+  video   Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, videoId])
+  @@map("progress")
+}
