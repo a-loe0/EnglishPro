@@ -81,6 +81,14 @@ EnglishPro/
 │   ├── migrations/
 │   └── seeds/
 │
+├── scripts/                     # Setup and utility scripts
+│   ├── 01-setup-mac.sh          # Install Homebrew dependencies
+│   ├── 02-init-project.sh       # Initialize project structure
+│   ├── 03-setup-database.sh     # Create DB and run migrations
+│   ├── 04-setup-env.sh          # Generate environment files
+│   ├── 05-seed-data.sh          # Create sample data
+│   └── 06-start-dev.sh          # Start development servers
+│
 ├── docker/                      # Docker configuration
 │   ├── Dockerfile.frontend
 │   ├── Dockerfile.backend
@@ -89,6 +97,7 @@ EnglishPro/
 ├── docs/                        # Documentation
 │   └── api/                     # API documentation
 │
+├── setup.sh                     # Master setup script (runs all scripts)
 └── README.md
 ```
 
@@ -97,7 +106,7 @@ EnglishPro/
 ### Frontend
 | Technology | Purpose |
 |------------|---------|
-| **React 18** | UI framework |
+| **React 18+** | UI framework |
 | **TypeScript** | Type safety |
 | **Vite** | Build tool |
 | **TailwindCSS** | Styling |
