@@ -1,8 +1,15 @@
 # EnglishPro - UI Design Document
 
-## Figma Project
+## UI Design Tool
 
-**Main Design File:** [EnglishPro](https://www.figma.com/design/aCItzpb4Cd7sRHEJNCoWTH/EnglishPro?node-id=1-2&t=fCrHC1ntaVdt0LR6-1)
+**Design Method:** Use the `frontend-design` skill in Claude Code to generate production-grade UI components and pages.
+
+To create UI components, invoke the skill with:
+```
+/frontend-design
+```
+
+This skill generates distinctive, polished frontend code following the design specifications below.
 
 ## Color Palette
 

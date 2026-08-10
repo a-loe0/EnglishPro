@@ -41,3 +41,6 @@ coverage/
 
 # Prisma
 backend/prisma/migrations/*_migration.sql
+backend/prisma/dev.db
+backend/prisma/*.db
+backend/prisma/*.db-journal

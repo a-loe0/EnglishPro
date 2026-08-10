@@ -5,29 +5,119 @@ import morgan from 'morgan';
 import compression from 'compression';
 import dotenv from 'dotenv';
 
+import authRoutes from './routes/auth';
+import videoRoutes from './routes/videos';
+import courseRoutes from './routes/courses';
+import dashboardRoutes from './routes/dashboard';
+import progressRoutes from './routes/progress';
+import analyticsRoutes from './routes/analytics';
+import { errorHandler, notFound } from './middleware/errorHandler';
+import { generalLimiter } from './middleware/rateLimit';
+import { initRedisCache } from './middleware/cache';
+import { initQueueService, getQueueService } from './services/queue.service';
+import { getStorageService } from './services/storage.service';
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
 }));
 app.use(compression());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(generalLimiter);
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+  try {
+    const queueService = getQueueService();
+    const stats = await queueService.getStats();
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      queues: stats,
+    });
+  } catch {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/videos', videoRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/progress', progressRoutes);
+app.use('/api/analytics', analyticsRoutes);
+
+// Error handling
+app.use(notFound);
+app.use(errorHandler);
+
+// Initialize services and start server
+async function start() {
+  try {
+    // Initialize storage directories
+    const storage = getStorageService();
+    await storage.init();
+    console.log('Storage service initialized');
+
+    // Initialize Redis cache
+    initRedisCache();
+    console.log('Redis cache initialized');
+
+    // Initialize queue service
+    await initQueueService();
+    console.log('Queue service initialized');
+
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Health check: http://localhost:${PORT}/api/health`);
+      console.log(`API endpoints:`);
+      console.log(`  - Auth: /api/auth/*`);
+      console.log(`  - Videos: /api/videos/*`);
+      console.log(`  - Courses: /api/courses/*`);
+      console.log(`  - Dashboard: /api/dashboard/*`);
+      console.log(`  - Progress: /api/progress/*`);
+      console.log(`  - Analytics: /api/analytics/*`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down...');
+  try {
+    const queueService = getQueueService();
+    await queueService.shutdown();
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+  }
+  process.exit(0);
 });
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, shutting down...');
+  try {
+    const queueService = getQueueService();
+    await queueService.shutdown();
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+  }
+  process.exit(0);
+});
+
+start();

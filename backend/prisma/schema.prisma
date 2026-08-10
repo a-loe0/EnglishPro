@@ -12,11 +12,6 @@ enum Role {
   STUDENT
 }
 
-enum SubmissionStatus {
-  PENDING
-  REVIEWED
-}
-
 enum VideoStatus {
   PROCESSING
   READY
@@ -36,7 +31,6 @@ model User {
   // Relations
   courses     Course[]     @relation("TeacherCourses")
   videos      Video[]      @relation("TeacherVideos")
-  submissions Submission[] @relation("StudentSubmissions")
   progress    Progress[]   @relation("StudentProgress")
 
   @@map("users")
@@ -47,6 +41,7 @@ model Course {
   teacherId   String   @map("teacher_id")
   title       String
   description String?
+  isPublished Boolean  @default(false) @map("is_published")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -54,6 +49,10 @@ model Course {
   teacher User    @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: Cascade)
   videos  Video[]
 
+  // Indexes
+  @@index([teacherId])
+  @@index([isPublished])
+  @@index([createdAt(sort: Desc)])
   @@map("courses")
 }
 
@@ -67,35 +66,24 @@ model Video {
   hlsUrl       String?     @map("hls_url")
   thumbnailUrl String?     @map("thumbnail_url")
   duration     Int?        // Duration in seconds
+  views        Int         @default(0)
   status       VideoStatus @default(PROCESSING)
+  isPublished  Boolean     @default(false) @map("is_published")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 
   // Relations
   teacher     User         @relation("TeacherVideos", fields: [teacherId], references: [id], onDelete: Cascade)
   course      Course?      @relation(fields: [courseId], references: [id], onDelete: SetNull)
-  submissions Submission[]
   progress    Progress[]
 
+  // Indexes
+  @@index([teacherId])
+  @@index([courseId])
+  @@index([status])
+  @@index([isPublished])
+  @@index([createdAt(sort: Desc)])
   @@map("videos")
-}
-
-model Submission {
-  id            String           @id @default(uuid())
-  studentId     String           @map("student_id")
-  videoId       String           @map("video_id")
-  submissionUrl String           @map("submission_url")
-  status        SubmissionStatus @default(PENDING)
-  grade         Int?
-  feedback      String?
-  submittedAt   DateTime         @default(now()) @map("submitted_at")
-  reviewedAt    DateTime?        @map("reviewed_at")
-
-  // Relations
-  student User  @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
-  video   Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
-
-  @@map("submissions")
 }
 
 model Progress {
@@ -103,6 +91,7 @@ model Progress {
   studentId       String   @map("student_id")
   videoId         String   @map("video_id")
   watchPercentage Float    @default(0) @map("watch_percentage")
+  lastPosition    Int      @default(0) @map("last_position") // Position in seconds where student left off
   completed       Boolean  @default(false)
   lastWatchedAt   DateTime @default(now()) @map("last_watched_at")
 
@@ -110,6 +99,11 @@ model Progress {
   student User  @relation("StudentProgress", fields: [studentId], references: [id], onDelete: Cascade)
   video   Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
+  // Indexes
   @@unique([studentId, videoId])
+  @@index([studentId])
+  @@index([videoId])
+  @@index([completed])
+  @@index([lastWatchedAt(sort: Desc)])
   @@map("progress")
 }
