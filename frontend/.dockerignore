@@ -1,0 +1,25 @@
+# This build uses `COPY . .`, so this file is the only thing keeping secrets and
+# host-arch node_modules out of the image. Do not trim it casually.
+
+node_modules
+dist
+
+# Secrets. Vite also auto-loads .env at build time — an env file leaking into
+# the context is both a disclosure risk and a source of confusing overrides.
+.env
+.env.*
+!.env.example
+
+# Tests are never type-checked or bundled for production. Verified that no
+# application source imports from src/test/ or any *.test.* file.
+src/test
+**/*.test.ts
+**/*.test.tsx
+
+coverage
+*.log
+*.md
+.git
+.gitignore
+Dockerfile
+.dockerignore

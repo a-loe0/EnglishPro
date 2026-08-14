@@ -82,7 +82,7 @@ export function Header({ transparent = false }: HeaderProps) {
               <span className="text-white font-bold text-lg">E</span>
             </div>
             <span className="font-bold text-xl text-gray-900 group-hover:text-primary transition-colors">
-              EnglishPro
+              EnglishGoPro
             </span>
           </Link>
 

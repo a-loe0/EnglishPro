@@ -52,7 +52,7 @@ export function Footer() {
               <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">E</span>
               </div>
-              <span className="font-bold text-xl text-white">EnglishPro</span>
+              <span className="font-bold text-xl text-white">EnglishGoPro</span>
             </Link>
             <p className="text-sm text-gray-400 mb-4">
               Master English speaking with personalized video lessons and expert feedback.
@@ -90,7 +90,7 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-400">
-              &copy; {currentYear} EnglishPro. All rights reserved.
+              &copy; {currentYear} EnglishGoPro. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-sm text-gray-400">
               <span>Made with</span>

@@ -135,8 +135,8 @@ test.describe('Navigation', () => {
   test('should navigate home via logo', async ({ page }) => {
     await page.goto('/login');
 
-    // Click on EnglishPro logo/brand
-    await page.getByRole('link', { name: /englishpro/i }).click();
+    // Click on EnglishGoPro logo/brand
+    await page.getByRole('link', { name: /englishgopro/i }).click();
     await expect(page).toHaveURL('/');
   });
 

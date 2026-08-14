@@ -59,9 +59,9 @@ process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-only';
 process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret-key-for-testing';
 process.env.JWT_ACCESS_EXPIRES_IN = '15m';
 process.env.JWT_REFRESH_EXPIRES_IN = '7d';
-process.env.DATABASE_URL = 'postgresql://localhost:5432/englishpro_test';
+process.env.DATABASE_URL = 'postgresql://localhost:5432/englishgopro_test';
 process.env.REDIS_URL = 'redis://localhost:6379';
-process.env.STORAGE_PATH = '/tmp/englishpro-test-storage';
+process.env.STORAGE_PATH = '/tmp/englishgopro-test-storage';
 
 // Global test utilities
 export const mockUser = {

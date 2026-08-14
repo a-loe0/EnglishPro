@@ -16,7 +16,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             <span className="text-white font-bold text-lg">E</span>
           </div>
           <span className="font-bold text-xl text-gray-900 group-hover:text-primary transition-colors">
-            EnglishPro
+            EnglishGoPro
           </span>
         </Link>
       </header>
@@ -40,7 +40,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       {/* Footer */}
       <footer className="py-6 text-center">
         <p className="text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} EnglishPro. All rights reserved.
+          &copy; {new Date().getFullYear()} EnglishGoPro. All rights reserved.
         </p>
       </footer>
     </div>

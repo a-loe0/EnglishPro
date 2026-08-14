@@ -33,7 +33,7 @@ export default function AuthInitializer({ children }: AuthInitializerProps) {
               style={{ borderColor: 'rgba(99,102,241,0.2)', borderTopColor: '#6366F1' }}
             />
           </div>
-          <p style={{ color: '#6B7280', fontWeight: 500 }}>Loading EnglishPro...</p>
+          <p style={{ color: '#6B7280', fontWeight: 500 }}>Loading EnglishGoPro...</p>
         </div>
       </div>
     );

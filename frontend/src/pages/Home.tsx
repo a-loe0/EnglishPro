@@ -22,7 +22,7 @@ export default function Home() {
       <header className="h-[70px] bg-white/80 backdrop-blur-sm shadow-[0_2px_20px_rgba(99,102,241,0.08)] sticky top-0 z-50">
         <div className="max-w-[1440px] mx-auto h-full px-8 flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent tracking-tight">
-            EnglishPro
+            EnglishGoPro
           </Link>
           <nav className="flex items-center gap-4">
             {isAuthenticated ? (
@@ -237,7 +237,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-8">
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                EnglishPro
+                EnglishGoPro
               </span>
               <nav className="flex items-center gap-6 text-sm text-gray-500">
                 <Link to="/about" className="hover:text-primary transition-colors">About</Link>
@@ -248,7 +248,7 @@ export default function Home() {
               </nav>
             </div>
             <p className="text-sm text-gray-400">
-              © {new Date().getFullYear()} EnglishPro. All rights reserved.
+              © {new Date().getFullYear()} EnglishGoPro. All rights reserved.
             </p>
           </div>
         </div>

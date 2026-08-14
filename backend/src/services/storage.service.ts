@@ -22,7 +22,7 @@ export class StorageService {
   private config: StorageConfig;
 
   constructor(config?: Partial<StorageConfig>) {
-    const basePath = config?.basePath || process.env.STORAGE_PATH || `${process.env.HOME}/englishpro-storage`;
+    const basePath = config?.basePath || process.env.STORAGE_PATH || `${process.env.HOME}/englishgopro-storage`;
 
     this.config = {
       basePath,

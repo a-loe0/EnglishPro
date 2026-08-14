@@ -83,7 +83,7 @@ export default function ResetPassword() {
       <header className="h-[70px] bg-white/80 backdrop-blur-sm shadow-[0_2px_20px_rgba(99,102,241,0.08)] relative z-10">
         <div className="max-w-[1440px] mx-auto h-full px-8 flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent tracking-tight">
-            EnglishPro
+            EnglishGoPro
           </Link>
         </div>
       </header>

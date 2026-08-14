@@ -80,7 +80,7 @@ export function TranscodeProgress({ videoId, onComplete, onError }: TranscodePro
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <FilmIcon className="w-4 h-4" />
             <span>
-              Transcoding to multiple resolutions (1080p, 720p, 480p, 360p)
+              Transcoding to multiple resolutions (720p, 480p, 360p)
             </span>
           </div>
         </>

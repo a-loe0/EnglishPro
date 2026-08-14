@@ -13,6 +13,8 @@ build/
 .env.*.local
 backend/.env
 frontend/.env
+# Production secrets (JWT keys, DB password) — lives only on the deploy host
+.env.production
 
 # Credentials file (contains passwords)
 .credentials
@@ -44,3 +46,10 @@ backend/prisma/migrations/*_migration.sql
 backend/prisma/dev.db
 backend/prisma/*.db
 backend/prisma/*.db-journal
+
+secrets/
+
+# Deployment runbook — contains the origin IP that Cloudflare proxying hides,
+# plus infrastructure details of the other stack sharing the host. This repo is
+# public; keep this file local.
+cloud-setup-implementation.md

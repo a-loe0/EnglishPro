@@ -23,9 +23,18 @@ export class QueueService {
   constructor(config?: Partial<QueueConfig>) {
     const redisUrl = config?.redisUrl || process.env.REDIS_URL || 'redis://localhost:6379';
 
+    // Defaults to 1 worker. ffmpeg saturates every core it is given, and the
+    // deploy target shares 2 vCPUs with another production stack whose API
+    // degrades under CPU starvation. Tunable via QUEUE_CONCURRENCY so the host
+    // can be adjusted with a restart instead of a rebuild.
+    // See cloud-setup-implementation.md §1.1(b).
+    const envConcurrency = Number(process.env.QUEUE_CONCURRENCY);
+
     this.config = {
       redisUrl,
-      concurrency: config?.concurrency || 2,
+      concurrency:
+        config?.concurrency ??
+        (Number.isInteger(envConcurrency) && envConcurrency > 0 ? envConcurrency : 1),
     };
 
     this.connection = new IORedis(this.config.redisUrl, {

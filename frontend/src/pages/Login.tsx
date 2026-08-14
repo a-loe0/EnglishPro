@@ -45,7 +45,7 @@ export default function Login() {
       <header className="h-[70px] bg-white/80 backdrop-blur-sm shadow-[0_2px_20px_rgba(99,102,241,0.08)] relative z-10">
         <div className="max-w-[1440px] mx-auto h-full px-8 flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent tracking-tight">
-            EnglishPro
+            EnglishGoPro
           </Link>
           <nav className="flex items-center gap-6">
             <Link
@@ -186,7 +186,7 @@ export default function Login() {
                 <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">New to EnglishPro?</span>
+                <span className="px-4 bg-white text-gray-500">New to EnglishGoPro?</span>
               </div>
             </div>
 

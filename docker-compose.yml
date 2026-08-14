@@ -1,0 +1,90 @@
+# EnglishGoPro production stack.
+#
+# This deploys as a SECOND TENANT on a shared host: another application already
+# runs there and owns ports 80/443 via its own reverse proxy. Most of the
+# unusual choices below (no published ports, resource caps, joining an external
+# network) exist purely to avoid disturbing it. Read the deployment runbook —
+# kept outside this repo — before changing any of them.
+#
+# Deploy:  IMAGE_TAG=<short-sha> docker compose pull
+#          IMAGE_TAG=<short-sha> docker compose up -d
+#
+# Pull-only by design: there are no `build:` keys, so a stray `up -d --build`
+# cannot start a compile that would contend with the co-tenant for CPU.
+# Images are produced by .github/workflows/build-images.yml.
+
+name: englishgopro
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: englishgopro
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: englishgopro
+    volumes:
+      - /srv/englishgopro/postgres:/var/lib/postgresql/data
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U englishgopro"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # noeviction is required by BullMQ — an evicting Redis silently drops queued
+    # transcode jobs rather than failing loudly.
+    command: ["redis-server", "--maxmemory-policy", "noeviction", "--appendonly", "yes"]
+    volumes:
+      - /srv/englishgopro/redis:/data
+    mem_limit: 96m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ghcr.io/a-loe0/englishgopro-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: ./backend/.env.production
+    volumes:
+      - /srv/englishgopro/storage:/data/storage
+    # Caps ffmpeg so it cannot starve the co-tenant's API on this 2-vCPU box.
+    # The other stack already applies the same treatment to its own worker.
+    cpus: 0.75
+    # Contains ffmpeg plus a 95 MB in-memory upload buffer. Without a limit, the
+    # kernel OOM killer would pick the largest process on the host — which is
+    # the co-tenant's database, not us.
+    mem_limit: 768m
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  web:
+    image: ghcr.io/a-loe0/englishgopro-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    mem_limit: 64m
+    depends_on:
+      - backend
+    networks:
+      # Own network, to reach `backend` by service name.
+      default: {}
+      # Join the co-tenant's existing network so its reverse proxy can reach us
+      # at englishgopro-web:80. Requires no edit to their compose file.
+      worldview_default:
+        aliases:
+          - englishgopro-web
+
+# No `ports:` on any service — nothing binds a host port, so there is no
+# possible conflict with Caddy on 80/443 and no Lightsail firewall change.
+networks:
+  default:
+  worldview_default:
+    external: true

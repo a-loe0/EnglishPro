@@ -11,8 +11,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@englishpro.com';
-const FROM_NAME = process.env.FROM_NAME || 'EnglishPro';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@englishgopro.com';
+const FROM_NAME = process.env.FROM_NAME || 'EnglishGoPro';
 
 /**
  * Send password reset email
@@ -22,7 +22,7 @@ export async function sendPasswordResetEmail(
   name: string,
   resetUrl: string
 ): Promise<void> {
-  const subject = 'Reset your EnglishPro password';
+  const subject = 'Reset your EnglishGoPro password';
 
   const html = `
     <!DOCTYPE html>
@@ -33,7 +33,7 @@ export async function sendPasswordResetEmail(
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #6366F1; margin: 0; font-size: 28px;">EnglishPro</h1>
+        <h1 style="color: #6366F1; margin: 0; font-size: 28px;">EnglishGoPro</h1>
       </div>
 
       <div style="background: #f9fafb; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
@@ -70,7 +70,7 @@ export async function sendPasswordResetEmail(
   `;
 
   const text = `
-Reset your EnglishPro password
+Reset your EnglishGoPro password
 
 Hi ${name},
 

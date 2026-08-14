@@ -43,7 +43,7 @@ export function DashboardLayout({ children, sidebarItems, title }: DashboardLayo
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">E</span>
           </div>
-          <span className="font-bold text-lg text-gray-900">EnglishPro</span>
+          <span className="font-bold text-lg text-gray-900">EnglishGoPro</span>
         </Link>
         <Avatar name={user?.name || ''} src={authService.getAvatarUrl(user?.avatarUrl)} size="sm" />
       </header>
@@ -73,7 +73,7 @@ export function DashboardLayout({ children, sidebarItems, title }: DashboardLayo
               <span className="text-white font-bold text-lg">E</span>
             </div>
             {!sidebarCollapsed && (
-              <span className="font-bold text-lg text-gray-900">EnglishPro</span>
+              <span className="font-bold text-lg text-gray-900">EnglishGoPro</span>
             )}
           </Link>
           <button

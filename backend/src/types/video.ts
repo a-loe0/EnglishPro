@@ -124,9 +124,14 @@ export interface JobStatus {
   error?: string;
 }
 
-// Resolution presets
+// Resolution presets.
+//
+// 1080p (5000k) is deliberately omitted. Output size scales with the sum of
+// these bitrates times video duration, and the deploy target is a shared box
+// with ~18 GB of usable video storage — including 1080p roughly doubled the
+// per-video footprint and the transcode CPU cost for a talking-head lesson
+// format that does not need it. See cloud-setup-implementation.md §2.2.
 export const RESOLUTION_PRESETS: Resolution[] = [
-  { name: '1080p', width: 1920, height: 1080, bitrate: '5000k' },
   { name: '720p', width: 1280, height: 720, bitrate: '2500k' },
   { name: '480p', width: 854, height: 480, bitrate: '1000k' },
   { name: '360p', width: 640, height: 360, bitrate: '600k' },

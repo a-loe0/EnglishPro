@@ -9,10 +9,10 @@ async function main() {
   // Create teacher
   const teacherPassword = await bcrypt.hash('teacher123', 10);
   const teacher = await prisma.user.upsert({
-    where: { email: 'teacher@englishpro.com' },
+    where: { email: 'teacher@englishgopro.com' },
     update: {},
     create: {
-      email: 'teacher@englishpro.com',
+      email: 'teacher@englishgopro.com',
       passwordHash: teacherPassword,
       name: 'Demo Teacher',
       role: Role.TEACHER,
@@ -24,10 +24,10 @@ async function main() {
   const studentPassword = await bcrypt.hash('student123', 10);
 
   const student1 = await prisma.user.upsert({
-    where: { email: 'student1@englishpro.com' },
+    where: { email: 'student1@englishgopro.com' },
     update: {},
     create: {
-      email: 'student1@englishpro.com',
+      email: 'student1@englishgopro.com',
       passwordHash: studentPassword,
       name: 'Alice Student',
       role: Role.STUDENT,
@@ -36,10 +36,10 @@ async function main() {
   console.log('Created student:', student1.email);
 
   const student2 = await prisma.user.upsert({
-    where: { email: 'student2@englishpro.com' },
+    where: { email: 'student2@englishgopro.com' },
     update: {},
     create: {
-      email: 'student2@englishpro.com',
+      email: 'student2@englishgopro.com',
       passwordHash: studentPassword,
       name: 'Bob Student',
       role: Role.STUDENT,
@@ -86,9 +86,9 @@ async function main() {
 
   console.log('');
   console.log('=== Sample Login Credentials ===');
-  console.log('Teacher: teacher@englishpro.com / teacher123');
-  console.log('Student: student1@englishpro.com / student123');
-  console.log('Student: student2@englishpro.com / student123');
+  console.log('Teacher: teacher@englishgopro.com / teacher123');
+  console.log('Student: student1@englishgopro.com / student123');
+  console.log('Student: student2@englishgopro.com / student123');
   console.log('');
   console.log('Database seeding complete!');
 }
