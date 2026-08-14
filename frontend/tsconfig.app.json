@@ -5,7 +5,13 @@
     "useDefineForClassFields": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "types": ["vite/client"],
+    // "node" is required by application code, not just tests: ErrorBoundary
+    // reads process.env.NODE_ENV (Vite statically replaces it at build time)
+    // and the video components type timer handles as NodeJS.Timeout. These
+    // types were previously arriving only as a side effect of the test files
+    // being in the program — so the build broke as soon as tests were excluded
+    // from the Docker context. Declared explicitly now.
+    "types": ["vite/client", "node"],
     "skipLibCheck": true,
 
     /* Bundler mode */
