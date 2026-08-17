@@ -22,6 +22,25 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8000;
 
+// How many reverse proxies sit in front of this process. Without this, req.ip
+// is the socket peer — in production that is the nginx container, identical for
+// every request on the planet, which collapses all per-IP rate limiting into a
+// single shared bucket.
+//
+// Production chain is Cloudflare -> Caddy -> nginx -> here, so TRUST_PROXY_HOPS=3.
+// Defaults to 0 because trusting hops that do not exist lets a client forge
+// X-Forwarded-For and choose its own rate-limit key.
+const TRUST_PROXY_HOPS = Number(process.env.TRUST_PROXY_HOPS ?? 0);
+app.set('trust proxy', Number.isFinite(TRUST_PROXY_HOPS) ? TRUST_PROXY_HOPS : 0);
+
+if (process.env.NODE_ENV === 'production' && !TRUST_PROXY_HOPS) {
+  console.warn(
+    '[WARN] TRUST_PROXY_HOPS is 0 in production. If this process sits behind a ' +
+    'reverse proxy, req.ip is the proxy address and all clients will share one ' +
+    'rate-limit bucket. Set it to the number of proxies in front of this app.'
+  );
+}
+
 // Middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
