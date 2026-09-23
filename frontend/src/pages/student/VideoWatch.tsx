@@ -7,6 +7,7 @@ import { videoService, type Video } from '../../services/videos';
 import { progressService } from '../../services/progress';
 import { studentSidebarItems } from '../../config/studentSidebar';
 import { useTranslation } from '../../i18n';
+import { useTutorStore } from '../../store/tutorStore';
 
 export default function VideoWatch() {
   const { videoId } = useParams<{ videoId: string }>();
@@ -19,6 +20,19 @@ export default function VideoWatch() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
+
+  const setTutorLesson = useTutorStore((s) => s.setLesson);
+
+  // Let the tutor widget teach from the lesson on screen.
+  useEffect(() => {
+    if (!video) return;
+    setTutorLesson({
+      title: video.title,
+      description: video.description,
+      courseTitle: video.course?.title,
+    });
+    return () => setTutorLesson(null);
+  }, [video, setTutorLesson]);
 
   useEffect(() => {
     async function loadVideo() {

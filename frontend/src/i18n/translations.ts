@@ -205,6 +205,26 @@ export const translations = {
     deleteResponse: 'Delete Response',
     deleting: 'Deleting...',
     confirmDeleteSubmission: 'Are you sure you want to delete your response? This cannot be undone.',
+
+    // AI tutor
+    tutorOpen: 'Ask the AI tutor',
+    tutorTitle: 'GoPro Tutor',
+    tutorHelpingWith: 'Helping with:',
+    tutorGeneralSubtitle: 'Ask me anything about English',
+    tutorGreeting: "Hi! I'm your English tutor. Ask me about words, grammar, or pronunciation, or send me a sentence and I'll help you improve it.",
+    tutorPlaceholder: 'Type your question...',
+    tutorSend: 'Send',
+    tutorStop: 'Stop',
+    tutorNewChat: 'New chat',
+    tutorClose: 'Close tutor',
+    tutorSuggestExplain: 'Explain the key words in this lesson',
+    tutorSuggestCheck: 'Check my sentence: ',
+    tutorSuggestPractice: 'Give me a short speaking exercise',
+    tutorDisclaimer: 'AI can make mistakes. Check important answers with your teacher.',
+    tutorErrorRateLimited: 'You are sending messages too quickly. Please wait a minute and try again.',
+    tutorErrorUnavailable: 'The tutor is resting right now. Please try again later.',
+    tutorErrorAuth: 'Please log in again to use the tutor.',
+    tutorErrorGeneric: 'Something went wrong. Please try again.',
   },
 
   zh: {
@@ -413,6 +433,26 @@ export const translations = {
     deleteResponse: '刪除回應',
     deleting: '刪除中...',
     confirmDeleteSubmission: '確定要刪除你的回應嗎？此操作無法復原。',
+
+    // AI tutor
+    tutorOpen: '詢問 AI 家教',
+    tutorTitle: 'GoPro 家教',
+    tutorHelpingWith: '目前課程：',
+    tutorGeneralSubtitle: '任何英文問題都可以問我',
+    tutorGreeting: '嗨！我是你的英文家教。可以問我單字、文法或發音，也可以傳一個句子給我，我會幫你改得更好。',
+    tutorPlaceholder: '輸入你的問題...',
+    tutorSend: '送出',
+    tutorStop: '停止',
+    tutorNewChat: '新對話',
+    tutorClose: '關閉家教',
+    tutorSuggestExplain: '解釋這堂課的重點單字',
+    tutorSuggestCheck: '幫我檢查這個句子：',
+    tutorSuggestPractice: '給我一個簡短的口說練習',
+    tutorDisclaimer: 'AI 可能會出錯，重要的答案請跟老師確認。',
+    tutorErrorRateLimited: '訊息傳送太快了，請等一分鐘後再試。',
+    tutorErrorUnavailable: '家教正在休息，請稍後再試。',
+    tutorErrorAuth: '請重新登入以使用家教。',
+    tutorErrorGeneric: '發生錯誤，請再試一次。',
   },
 } as const;
 

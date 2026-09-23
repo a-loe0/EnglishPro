@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/auth';
 import { Avatar, LanguageToggle } from '../common';
+import { TutorChat } from '../tutor';
 
 export interface SidebarItem {
   icon: React.ReactNode;
@@ -180,6 +181,8 @@ export function DashboardLayout({ children, sidebarItems, title }: DashboardLayo
         {/* Content */}
         <div className="p-6">{children}</div>
       </main>
+
+      {user?.role === 'STUDENT' && <TutorChat />}
     </div>
   );
 }
