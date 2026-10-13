@@ -41,9 +41,11 @@ async function handleDraftRequest(request: Request, env: Env): Promise<Response>
   const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
   const user = token ? await verifyAccessToken(token, env.JWT_SECRET) : null;
   if (!user) {
+    console.warn('draft: access token rejected', { hadToken: token.length > 0 });
     return jsonError(401, 'Please log in', 'UNAUTHORIZED');
   }
   if (user.role !== 'TEACHER') {
+    console.warn('draft: non-teacher role', { role: user.role });
     return jsonError(403, 'Only teachers can draft practice', 'FORBIDDEN');
   }
 
