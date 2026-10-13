@@ -30,6 +30,7 @@ import StudentCourses from './pages/student/Courses';
 import StudentCourseDetail from './pages/student/CourseDetail';
 import StudentLessons from './pages/student/Lessons';
 import StudentSettings from './pages/student/Settings';
+import StudentPractice from './pages/student/Practice';
 
 export default function App() {
   return (
@@ -70,6 +71,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['STUDENT']}>
                 <VideoWatch />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/practice"
+            element={
+              <ProtectedRoute allowedRoles={['STUDENT']}>
+                <StudentPractice />
               </ProtectedRoute>
             }
           />
