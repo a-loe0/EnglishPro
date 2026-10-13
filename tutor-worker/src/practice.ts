@@ -11,6 +11,9 @@ export interface PracticeDraft {
 export interface DraftRequest {
   title: string;
   description: string;
+  // Questions, words and sentences already on the page, so a new draft can
+  // avoid repeating them.
+  existing: string[];
 }
 
 export class DraftRequestError extends Error {}
@@ -19,16 +22,27 @@ const clip = (v: unknown, max: number): string => (typeof v === 'string' ? v.tri
 
 export function parseDraftRequest(body: unknown): DraftRequest {
   if (typeof body !== 'object' || body === null) throw new DraftRequestError('Invalid request');
-  const { title, description } = body as Record<string, unknown>;
+  const { title, description, existing } = body as Record<string, unknown>;
   const t = clip(title, 200);
   if (!t) throw new DraftRequestError('A lesson title is required');
-  return { title: t, description: clip(description, 1500) };
+  const seen = (Array.isArray(existing) ? existing : [])
+    .map((e) => clip(e, 200))
+    .filter(Boolean)
+    .slice(0, 40);
+  return { title: t, description: clip(description, 1500), existing: seen };
 }
 
-export function buildDraftPrompt({ title, description }: DraftRequest): string {
+export function buildDraftPrompt({ title, description, existing }: DraftRequest): string {
   return [
     'You write English practice activities for a teacher of young learners (grades 3-6) whose first language is Traditional Chinese.',
     'Use only simple, concrete vocabulary that fits the lesson below. Do not invent facts about what was taught beyond the title and description.',
+    '',
+    'QUIZ RULES (important):',
+    '- Exactly ONE option is correct. Every other option must be clearly wrong: wrong grammar, wrong meaning, or a wrong fact.',
+    '- Never offer two options that are both acceptable English (for example "I am ten" and "I am ten years old" are both fine, so do not put both in one question).',
+    '- Before answering, check each question: could a careful teacher accept a second option? If yes, rewrite the options.',
+    '- Ask about different things in each question; do not ask the same question twice with reworded options.',
+    '- The explanation says why the correct option is right, in one short sentence.',
     '',
     `Lesson title: ${title}`,
     description ? `Lesson description: ${description}` : 'Lesson description: (none given)',
@@ -37,6 +51,13 @@ export function buildDraftPrompt({ title, description }: DraftRequest): string {
     '{"quiz":[{"prompt":"...","options":["...","...","...","..."],"answer":0,"explanation":"...","explanationZh":"..."}],',
     ' "match":[{"word":"English word","zh":"繁體中文"}],',
     ' "scramble":[{"text":"A short English sentence","zh":"繁體中文翻譯"}]}',
+    ...(existing.length > 0
+      ? [
+          'The teacher already has these items. Do NOT repeat or reword any of them; write new, different ones that still fit the lesson:',
+          ...existing.map((e) => `- ${e}`),
+          '',
+        ]
+      : []),
     'Write 5 quiz questions (4 options each, "answer" is the 0-based index of the correct option), 6 match pairs, and 4 scramble sentences of 4 to 8 words.',
   ].join('\n');
 }

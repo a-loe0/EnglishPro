@@ -57,11 +57,21 @@ export default function TeacherLessonPractice() {
     try {
       // Add the new set to what's already there (the teacher removes what she
       // doesn't want) instead of replacing it.
-      const drafted = await draftLessonPractice(title, description);
+      const existing = [
+        ...practice.quiz.map((q) => q.prompt),
+        ...practice.match.map((m) => m.word),
+        ...practice.scramble.map((s) => s.text),
+      ].filter((e) => e.trim());
+      const drafted = await draftLessonPractice(title, description, existing);
+      // Skip anything the model repeated anyway.
+      const fresh = <T,>(items: T[], current: T[], key: (item: T) => string) => {
+        const have = new Set(current.map((c) => key(c).trim().toLowerCase()));
+        return items.filter((i) => !have.has(key(i).trim().toLowerCase()));
+      };
       setPractice((current) => ({
-        quiz: [...current.quiz, ...drafted.quiz].slice(0, 10),
-        match: [...current.match, ...drafted.match].slice(0, 8),
-        scramble: [...current.scramble, ...drafted.scramble].slice(0, 8),
+        quiz: [...current.quiz, ...fresh(drafted.quiz, current.quiz, (q) => q.prompt)].slice(0, 10),
+        match: [...current.match, ...fresh(drafted.match, current.match, (m) => m.word)].slice(0, 8),
+        scramble: [...current.scramble, ...fresh(drafted.scramble, current.scramble, (s) => s.text)].slice(0, 8),
       }));
       setMessage({ type: 'success', text: t('lpDrafted') });
     } catch (err) {

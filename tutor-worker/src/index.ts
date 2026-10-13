@@ -14,6 +14,8 @@ export interface Env {
   AI: Ai;
   TUTOR_LIMITER: RateLimit;
   TUTOR_MODEL: string;
+  /** Optional stronger model for teacher drafts; falls back to TUTOR_MODEL. */
+  DRAFT_MODEL?: string;
   /** Same value as the backend's JWT_SECRET. */
   JWT_SECRET: string;
 }
@@ -69,10 +71,10 @@ async function handleDraftRequest(request: Request, env: Env): Promise<Response>
 
   let result: unknown;
   try {
-    result = await env.AI.run(env.TUTOR_MODEL as keyof AiModels, {
+    result = await env.AI.run((env.DRAFT_MODEL || env.TUTOR_MODEL) as keyof AiModels, {
       messages: [{ role: 'user', content: buildDraftPrompt(draftRequest) }],
       max_completion_tokens: DRAFT_MAX_TOKENS,
-      temperature: 0.4,
+      temperature: 0.7,
       chat_template_kwargs: { enable_thinking: false },
     } as never);
   } catch (err) {

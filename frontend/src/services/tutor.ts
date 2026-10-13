@@ -135,7 +135,11 @@ export async function streamTutorReply(
  * Asks the AI for a starting set of practice activities for a lesson. Teacher
  * only; the teacher edits the draft before saving it.
  */
-export async function draftLessonPractice(title: string, description: string | null): Promise<LessonPractice> {
+export async function draftLessonPractice(
+  title: string,
+  description: string | null,
+  existing: string[] = [],
+): Promise<LessonPractice> {
   const send = () =>
     fetch(`${TUTOR_URL}/draft`, {
       method: 'POST',
@@ -143,7 +147,7 @@ export async function draftLessonPractice(title: string, description: string | n
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authService.getToken() ?? ''}`,
       },
-      body: JSON.stringify({ title, description: description ?? '' }),
+      body: JSON.stringify({ title, description: description ?? '', existing }),
     });
 
   let response: Response;

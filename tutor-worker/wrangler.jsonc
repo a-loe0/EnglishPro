@@ -24,7 +24,10 @@
   ],
 
   "vars": {
-    "TUTOR_MODEL": "@cf/zai-org/glm-4.7-flash"
+    "TUTOR_MODEL": "@cf/zai-org/glm-4.7-flash",
+    // Teacher "Draft with AI" uses a larger model: it follows "exactly one correct
+    // answer" far better. Only teachers call it, so the extra cost is small.
+    "DRAFT_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
   },
   // Secret (set with `npx wrangler secret put JWT_SECRET`): must equal the
   // backend's JWT_SECRET so the Worker accepts the site's access tokens.
