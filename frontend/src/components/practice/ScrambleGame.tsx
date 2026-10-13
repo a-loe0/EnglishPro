@@ -91,7 +91,7 @@ export function ScrambleGame({ activity, onFinish }: ActivityProps<ScrambleActiv
         {solved ? (
           <div>
             <p className="mb-1 font-semibold text-green-600">{sentence.text}. ✔</p>
-            <p className="mb-3 text-gray-500">{sentence.zh}</p>
+            {sentence.zh && <p className="mb-3 text-gray-500">{sentence.zh}</p>}
             <button type="button" onClick={next} className="rounded-lg bg-primary px-5 py-2 text-white hover:bg-primary-dark">
               {index + 1 >= activity.sentences.length ? t('prFinish') : t('next')}
             </button>

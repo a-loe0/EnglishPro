@@ -1,4 +1,5 @@
-import { PrismaClient, Video, VideoStatus } from '@prisma/client';
+import { Prisma, PrismaClient, Video, VideoStatus } from '@prisma/client';
+import type { LessonPractice } from '../types/practice';
 import { getStorageService } from './storage.service';
 import { getQueueService } from './queue.service';
 import { getFFmpegService } from './ffmpeg.service';
@@ -336,6 +337,16 @@ export class VideoService {
   }
 
   /**
+   * Replace the lesson's practice activities (already validated by the caller)
+   */
+  async setPractice(id: string, practice: LessonPractice | null): Promise<Video> {
+    return this.prisma.video.update({
+      where: { id },
+      data: { practice: practice ?? Prisma.DbNull },
+    });
+  }
+
+  /**
    * Increment view count
    */
   async incrementViews(id: string): Promise<void> {
@@ -369,6 +380,7 @@ export class VideoService {
       views: video.views,
       status: video.status,
       isPublished: video.isPublished,
+      practice: video.practice ?? null,
       createdAt: video.createdAt.toISOString(),
       updatedAt: video.updatedAt.toISOString(),
       teacher: video.teacher,

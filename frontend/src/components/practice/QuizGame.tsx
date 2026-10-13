@@ -33,8 +33,11 @@ export function QuizGame({ activity, onFinish }: ActivityProps<QuizActivity>) {
         {t('prQuestion')} {index + 1} / {activity.questions.length}
       </p>
       <h3 className="text-xl font-bold text-gray-900">{question.prompt}</h3>
-      {language === 'zh' && <p className="mb-4 text-gray-500">{question.promptZh}</p>}
-      {language === 'en' && <div className="mb-4" />}
+      {language === 'zh' && question.promptZh ? (
+        <p className="mb-4 text-gray-500">{question.promptZh}</p>
+      ) : (
+        <div className="mb-4" />
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         {question.options.map((option, i) => {

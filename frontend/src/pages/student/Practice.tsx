@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout';
 import { Card, Badge } from '../../components/common';
 import { studentSidebarItems } from '../../config/studentSidebar';
 import { useAuthStore } from '../../store/authStore';
 import { useLanguage } from '../../i18n';
-import { activities, type Activity, type ActivityCategory } from '../../data/practice';
+import { activities, lessonActivities, type Activity, type ActivityCategory } from '../../data/practice';
+import { videoService } from '../../services/videos';
 import {
   loadPracticeProgress,
   recordPracticeResult,
@@ -46,6 +48,25 @@ function ActivityRunner({ activity, onFinish }: { activity: Activity; onFinish: 
 export default function StudentPractice() {
   const { t, language } = useLanguage();
   const userId = useAuthStore((s) => s.user?.id);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const lessonFilter = searchParams.get('lesson');
+  const [lessonItems, setLessonItems] = useState<Activity[]>([]);
+
+  // Practice the teacher attached to published lessons.
+  useEffect(() => {
+    let cancelled = false;
+    videoService
+      .list({ status: 'READY', limit: 100 })
+      .then((res) => {
+        if (!cancelled) setLessonItems(res.data.flatMap((video) => lessonActivities(video)));
+      })
+      .catch(() => {
+        // Built-in practice still works without lesson activities.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [tab, setTab] = useState<Tab>('all');
   const [progress, setProgress] = useState(() => loadPracticeProgress(userId));
@@ -61,7 +82,9 @@ export default function StudentPractice() {
     { id: 'quizzes', label: t('prTabQuizzes') },
   ];
 
-  const visible = activities.filter((a) => tab === 'all' || a.category === tab);
+  const inTab = (a: Activity) => tab === 'all' || a.category === tab;
+  const lessonVisible = lessonItems.filter((a) => inTab(a) && (!lessonFilter || a.lessonId === lessonFilter));
+  const visible = lessonFilter ? [] : activities.filter(inTab);
 
   const start = (activity: Activity) => {
     setActive(activity);
@@ -74,6 +97,32 @@ export default function StudentPractice() {
     setProgress(recordPracticeResult(userId, active.id, score, total));
     setResult({ score, total });
   };
+
+  const renderCards = (list: Activity[]) => (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {list.map((activity) => {
+          const best = progress[activity.id];
+          return (
+            <Card key={activity.id} hoverable className="flex flex-col">
+              <div className="mb-2 text-4xl">{activity.icon}</div>
+              <h3 className="text-lg font-bold text-gray-900">{activity.title[language]}</h3>
+              <p className="mb-3 flex-1 text-sm text-gray-500">{activity.description[language]}</p>
+              <div className="mb-3 flex items-center justify-between text-sm">
+                <Badge>{activity.lessonId ? t('prFromLesson') : activity.level === 'beginner' ? t('prBeginner') : t('prIntermediate')}</Badge>
+                {best ? <Stars count={starsFor(best.best, best.total)} /> : <span className="text-gray-400">{t('prNotPlayed')}</span>}
+              </div>
+              <button
+                type="button"
+                onClick={() => start(activity)}
+                className="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-dark"
+              >
+                {best ? t('prPlayAgain') : t('prStart')}
+              </button>
+            </Card>
+          );
+        })}
+      </div>
+  );
 
   if (active) {
     const stars = result ? starsFor(result.score, result.total) : 0;
@@ -141,29 +190,25 @@ export default function StudentPractice() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map((activity) => {
-          const best = progress[activity.id];
-          return (
-            <Card key={activity.id} hoverable className="flex flex-col">
-              <div className="mb-2 text-4xl">{activity.icon}</div>
-              <h3 className="text-lg font-bold text-gray-900">{activity.title[language]}</h3>
-              <p className="mb-3 flex-1 text-sm text-gray-500">{activity.description[language]}</p>
-              <div className="mb-3 flex items-center justify-between text-sm">
-                <Badge>{activity.level === 'beginner' ? t('prBeginner') : t('prIntermediate')}</Badge>
-                {best ? <Stars count={starsFor(best.best, best.total)} /> : <span className="text-gray-400">{t('prNotPlayed')}</span>}
-              </div>
-              <button
-                type="button"
-                onClick={() => start(activity)}
-                className="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-dark"
-              >
-                {best ? t('prPlayAgain') : t('prStart')}
-              </button>
-            </Card>
-          );
-        })}
-      </div>
+      {lessonVisible.length > 0 && (
+        <section className="mb-8">
+          <h3 className="mb-3 text-lg font-semibold text-gray-900">{t('prFromLessons')}</h3>
+          {renderCards(lessonVisible)}
+        </section>
+      )}
+
+      {visible.length > 0 && (
+        <section>
+          {lessonItems.length > 0 && <h3 className="mb-3 text-lg font-semibold text-gray-900">{t('prMorePractice')}</h3>}
+          {renderCards(visible)}
+        </section>
+      )}
+
+      {lessonFilter && (
+        <button type="button" onClick={() => setSearchParams({})} className="mt-4 text-sm text-primary hover:underline">
+          {t('prMorePractice')} →
+        </button>
+      )}
     </DashboardLayout>
   );
 }

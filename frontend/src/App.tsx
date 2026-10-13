@@ -30,6 +30,7 @@ import StudentCourses from './pages/student/Courses';
 import StudentCourseDetail from './pages/student/CourseDetail';
 import StudentLessons from './pages/student/Lessons';
 import StudentSettings from './pages/student/Settings';
+import TeacherLessonPractice from './pages/teacher/LessonPractice';
 import StudentPractice from './pages/student/Practice';
 
 export default function App() {
@@ -161,6 +162,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['TEACHER']}>
                 <TeacherVideoEdit />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/videos/:videoId/practice"
+            element={
+              <ProtectedRoute allowedRoles={['TEACHER']}>
+                <TeacherLessonPractice />
               </ProtectedRoute>
             }
           />

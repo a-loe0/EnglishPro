@@ -198,6 +198,16 @@ export default function VideoWatch() {
             {video.description && (
               <p className="mt-4 text-gray-600">{video.description}</p>
             )}
+
+            {video.practice && (
+              <Button
+                variant="secondary"
+                className="mt-4"
+                onClick={() => navigate(`/student/practice?lesson=${video.id}`)}
+              >
+                🎯 {t('prPracticeThisLesson')}
+              </Button>
+            )}
           </div>
         </div>
 

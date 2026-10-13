@@ -215,7 +215,17 @@ export default function Videos() {
                   </button>
                 </div>
 
-                <div className="pt-3 mt-3 border-t border-gray-100 text-right">
+                <div className="pt-3 mt-3 border-t border-gray-100 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/teacher/videos/${video.id}/practice`);
+                    }}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    {t('lpEditPractice')}{video.practice ? ' ✓' : ''}
+                  </button>
                   <button
                     type="button"
                     onClick={(e) => {

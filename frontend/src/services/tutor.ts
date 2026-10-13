@@ -1,4 +1,5 @@
 import { authService } from './auth';
+import type { LessonPractice } from './videos';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 // The tutor is a Cloudflare Worker on /api/tutor in production. For local
@@ -128,4 +129,40 @@ export async function streamTutorReply(
       }
     }
   }
+}
+
+/**
+ * Asks the AI for a starting set of practice activities for a lesson. Teacher
+ * only; the teacher edits the draft before saving it.
+ */
+export async function draftLessonPractice(title: string, description: string | null): Promise<LessonPractice> {
+  const send = () =>
+    fetch(`${TUTOR_URL}/draft`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authService.getToken() ?? ''}`,
+      },
+      body: JSON.stringify({ title, description: description ?? '' }),
+    });
+
+  let response: Response;
+  try {
+    response = await send();
+    if (response.status === 401) {
+      try {
+        await authService.refreshToken();
+      } catch {
+        throw new TutorError('UNAUTHORIZED', 'Please log in again');
+      }
+      response = await send();
+    }
+  } catch (err) {
+    if (err instanceof TutorError) throw err;
+    throw new TutorError('NETWORK', 'Could not reach the tutor');
+  }
+
+  if (!response.ok) throw await toTutorError(response);
+  const data = (await response.json()) as { practice: LessonPractice };
+  return data.practice;
 }

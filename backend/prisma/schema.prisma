@@ -69,6 +69,8 @@ model Video {
   views        Int         @default(0)
   status       VideoStatus @default(PROCESSING)
   isPublished  Boolean     @default(false) @map("is_published")
+  // Teacher-authored practice for this lesson (see src/types/practice.ts).
+  practice     Json?
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 
