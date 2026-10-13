@@ -70,3 +70,13 @@ describe('POST /api/tutor/draft', () => {
     expect((await draft(makeEnv('not json').env, 'TEACHER')).status).toBe(502);
   });
 });
+
+describe('draft prompt', () => {
+  it('requires one correct answer and lists existing items to avoid', async () => {
+    const { env, run } = makeEnv();
+    await draft(env, 'TEACHER', { title: 'Age', existing: ['How old are you?'] });
+    const sent = JSON.stringify(run.mock.calls[0]);
+    expect(sent).toContain('Exactly ONE option is correct');
+    expect(sent).toContain('How old are you?');
+  });
+});
