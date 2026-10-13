@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout';
-import { Button, Card, Spinner } from '../../components/common';
+import { Button, Card, Spinner, Modal } from '../../components/common';
 import { videoService } from '../../services/videos';
 import type { Video } from '../../services/videos';
 import { teacherSidebarItems } from '../../config/teacherSidebar';
@@ -33,6 +33,8 @@ export default function Videos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Video | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchVideos() {
@@ -69,6 +71,23 @@ export default function Videos() {
       setError(errorMessage || t('failedToUpdatePublish'));
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return;
+    try {
+      setDeleting(true);
+      setError(null);
+      await videoService.delete(pendingDelete.id);
+      setVideos((prev) => prev.filter((v) => v.id !== pendingDelete.id));
+      setPendingDelete(null);
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      setError(message || t('failedToDeleteVideo'));
+      setPendingDelete(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -195,11 +214,42 @@ export default function Videos() {
                     )}
                   </button>
                 </div>
+
+                <div className="pt-3 mt-3 border-t border-gray-100 text-right">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPendingDelete(video);
+                    }}
+                    className="text-sm font-medium text-red-600 hover:text-red-700 hover:underline"
+                  >
+                    {t('deleteVideo')}
+                  </button>
+                </div>
               </div>
             </Card>
           ))}
         </div>
       )}
+
+      <Modal
+        isOpen={pendingDelete !== null}
+        onClose={() => !deleting && setPendingDelete(null)}
+        title={t('deleteVideo')}
+        size="sm"
+      >
+        <p className="text-gray-600 mb-2 font-medium break-words">{pendingDelete?.title}</p>
+        <p className="text-gray-600 mb-6">{t('confirmDeleteVideo')}</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setPendingDelete(null)} disabled={deleting}>
+            {t('cancel')}
+          </Button>
+          <Button variant="danger" onClick={handleConfirmDelete} isLoading={deleting}>
+            {t('delete')}
+          </Button>
+        </div>
+      </Modal>
     </DashboardLayout>
   );
 }

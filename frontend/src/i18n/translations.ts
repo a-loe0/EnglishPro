@@ -225,6 +225,10 @@ export const translations = {
     tutorErrorUnavailable: 'The tutor is resting right now. Please try again later.',
     tutorErrorAuth: 'Please log in again to use the tutor.',
     tutorErrorGeneric: 'Something went wrong. Please try again.',
+    deleteVideo: 'Delete video',
+    confirmDeleteVideo: 'Delete this video? Students will no longer be able to watch it. This cannot be undone.',
+    failedToDeleteVideo: 'Could not delete the video. Please try again.',
+
     // Practice
     prTitle: 'Practice',
     prHeading: 'Games, quizzes & practice',
@@ -484,6 +488,10 @@ export const translations = {
     tutorErrorUnavailable: '家教正在休息，請稍後再試。',
     tutorErrorAuth: '請重新登入以使用家教。',
     tutorErrorGeneric: '發生錯誤，請再試一次。',
+    deleteVideo: '刪除影片',
+    confirmDeleteVideo: '確定要刪除這部影片嗎？學生將無法再觀看，且此操作無法復原。',
+    failedToDeleteVideo: '無法刪除影片，請再試一次。',
+
     // Practice
     prTitle: '練習',
     prHeading: '遊戲、測驗與練習',
