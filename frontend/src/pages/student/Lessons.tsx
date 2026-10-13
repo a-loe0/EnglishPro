@@ -4,22 +4,43 @@ import { DashboardLayout } from '../../components/layout';
 import { Card, Spinner } from '../../components/common';
 import { studentSidebarItems } from '../../config/studentSidebar';
 import { progressService } from '../../services/progress';
-import { getFullUrl } from '../../services/api';
-import type { Progress } from '../../services/progress';
+import { videoService } from '../../services/videos';
+import type { Video } from '../../services/videos';
 import { useTranslation } from '../../i18n';
+
+// A published video plus this student's progress on it (zeros if not started).
+interface Lesson {
+  video: Video;
+  watchPercentage: number;
+  completed: boolean;
+}
 
 export default function StudentLessons() {
   const navigate = useNavigate();
   const t = useTranslation();
-  const [lessons, setLessons] = useState<Progress[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'in-progress' | 'completed'>('all');
 
   useEffect(() => {
     async function fetchLessons() {
       try {
-        const data = await progressService.getAll();
-        setLessons(data);
+        // Every published video is a lesson; no enrollment needed.
+        const [videos, progress] = await Promise.all([
+          videoService.list({ status: 'READY', limit: 100 }),
+          progressService.getAll().catch(() => []),
+        ]);
+        const byVideo = new Map(progress.map((p) => [p.videoId, p]));
+        setLessons(
+          videos.data.map((video) => {
+            const p = byVideo.get(video.id);
+            return {
+              video,
+              watchPercentage: p?.watchPercentage ?? 0,
+              completed: p?.completed ?? false,
+            };
+          }),
+        );
       } catch (error) {
         console.error('Failed to load lessons:', error);
       } finally {
@@ -56,7 +77,7 @@ export default function StudentLessons() {
     <DashboardLayout sidebarItems={studentSidebarItems} title={t('lessons')}>
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900">{t('myLessons')}</h2>
-        <p className="text-gray-500 mt-1">{t('allVideosStarted')}</p>
+        <p className="text-gray-500 mt-1">{t('allLessonsAvailable')}</p>
       </div>
 
       {/* Filter Tabs */}
@@ -85,22 +106,22 @@ export default function StudentLessons() {
             </svg>
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('noLessonsYet')}</h3>
-          <p className="text-gray-500">{t('startWatching')}</p>
+          <p className="text-gray-500">{t('lessonsAppearHere')}</p>
         </Card>
       ) : (
         <div className="space-y-4">
           {filteredLessons.map((lesson) => (
             <Card
-              key={lesson.id}
+              key={lesson.video.id}
               className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate(`/student/watch/${lesson.videoId}`)}
+              onClick={() => navigate(`/student/watch/${lesson.video.id}`)}
             >
               <div className="flex items-center gap-4">
                 {/* Thumbnail */}
                 <div className="w-32 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
-                  {lesson.video?.thumbnailUrl ? (
+                  {lesson.video.thumbnailUrl ? (
                     <img
-                      src={getFullUrl(lesson.video.thumbnailUrl) || ''}
+                      src={videoService.getThumbnailUrl(lesson.video.id)}
                       alt={lesson.video.title}
                       className="w-full h-full object-cover"
                     />
@@ -123,16 +144,16 @@ export default function StudentLessons() {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 truncate">
-                    {lesson.video?.title || 'Untitled Video'}
+                    {lesson.video.title}
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">
-                    {t('duration')}: {formatDuration(lesson.video?.duration || null)}
+                    {t('duration')}: {formatDuration(lesson.video.duration)}
                   </p>
 
                   {/* Progress Bar */}
                   <div className="mt-2">
                     <div className="flex justify-between text-xs text-gray-500 mb-1">
-                      <span>{lesson.completed ? t('completed') : t('inProgress')}</span>
+                      <span>{lesson.completed ? t('completed') : lesson.watchPercentage > 0 ? t('inProgress') : t('notStarted')}</span>
                       <span>{Math.round(lesson.watchPercentage)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5">
