@@ -55,7 +55,7 @@ describe('MatchGame', () => {
     const user = userEvent.setup();
 
     for (const pair of activity.pairs) {
-      await user.click(screen.getByText(pair.emoji));
+      await user.click(screen.getByText(pair.emoji ?? ''));
       await user.click(screen.getByRole('button', { name: pair.word }));
     }
     expect(onFinish).toHaveBeenCalledWith(2, 2);

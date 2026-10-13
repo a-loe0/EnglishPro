@@ -1,3 +1,5 @@
+import type { LessonPractice } from '../services/videos';
+
 // Built-in practice library. Every learner-facing string is bilingual so the
 // page works in English and 繁體中文 without a second code path.
 
@@ -14,6 +16,8 @@ interface ActivityBase {
   category: ActivityCategory;
   level: Level;
   icon: string;
+  // Set for activities built from a teacher's lesson practice.
+  lessonId?: string;
   title: Bilingual;
   description: Bilingual;
 }
@@ -49,7 +53,8 @@ export interface ScrambleActivity extends ActivityBase {
 // Match each word to its picture.
 export interface MatchActivity extends ActivityBase {
   kind: 'match';
-  pairs: { emoji: string; word: string; zh: string }[];
+  // Built-in pairs use a picture; lesson pairs match English to Chinese.
+  pairs: { emoji?: string; word: string; zh: string }[];
 }
 
 export interface QuizQuestion {
@@ -259,6 +264,66 @@ export const activities: Activity[] = [
     ],
   },
 ];
+
+// Turns a lesson's teacher-authored practice into playable activities. A
+// section with nothing in it produces no activity.
+export function lessonActivities(lesson: { id: string; title: string; practice?: LessonPractice | null }): Activity[] {
+  const p = lesson.practice;
+  if (!p) return [];
+  const base = { level: 'beginner' as Level, lessonId: lesson.id };
+  const named = (en: string, zh: string): Bilingual => ({
+    en: `${lesson.title}: ${en}`,
+    zh: `${lesson.title}：${zh}`,
+  });
+  const out: Activity[] = [];
+
+  if (p.quiz.length > 0) {
+    out.push({
+      ...base,
+      id: `lesson-${lesson.id}-quiz`,
+      kind: 'quiz',
+      category: 'quizzes',
+      icon: '📝',
+      title: named('Quiz', '小測驗'),
+      description: { en: 'Questions about this lesson.', zh: '關於這堂課的題目。' },
+      questions: p.quiz.map((q) => ({
+        prompt: q.prompt,
+        promptZh: q.promptZh ?? '',
+        options: q.options,
+        answer: q.answer,
+        explanation: {
+          en: q.explanation ?? '',
+          zh: q.explanationZh ?? q.explanation ?? '',
+        },
+      })),
+    });
+  }
+  if (p.match.length >= 2) {
+    out.push({
+      ...base,
+      id: `lesson-${lesson.id}-match`,
+      kind: 'match',
+      category: 'games',
+      icon: '🃏',
+      title: named('Word match', '單字配對'),
+      description: { en: 'Match the words from this lesson to their meaning.', zh: '把這堂課的單字配到它的意思。' },
+      pairs: p.match,
+    });
+  }
+  if (p.scramble.length > 0) {
+    out.push({
+      ...base,
+      id: `lesson-${lesson.id}-scramble`,
+      kind: 'scramble',
+      category: 'games',
+      icon: '🧩',
+      title: named('Sentence builder', '句子拼圖'),
+      description: { en: 'Put the words of this lesson in order.', zh: '把這堂課的句子排成正確順序。' },
+      sentences: p.scramble.map((x) => ({ text: x.text, zh: x.zh ?? '' })),
+    });
+  }
+  return out;
+}
 
 export function getActivity(id: string): Activity | undefined {
   return activities.find((a) => a.id === id);

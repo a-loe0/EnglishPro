@@ -40,7 +40,7 @@ export function MatchGame({ activity, onFinish }: ActivityProps<MatchActivity>) 
               type="button"
               disabled={matched.has(i)}
               onClick={() => setPicked(i)}
-              aria-label={`picture ${i}`}
+              aria-label={`item ${i}`}
               className={`rounded-xl border-2 py-2 text-4xl transition-colors ${
                 matched.has(i)
                   ? 'border-green-300 bg-green-50 opacity-50'
@@ -49,7 +49,7 @@ export function MatchGame({ activity, onFinish }: ActivityProps<MatchActivity>) 
                     : 'border-gray-200 bg-white hover:border-primary'
               }`}
             >
-              {activity.pairs[i].emoji}
+              {activity.pairs[i].emoji ?? <span className="px-2 text-lg font-medium">{activity.pairs[i].zh}</span>}
             </button>
           ))}
         </div>
@@ -69,7 +69,9 @@ export function MatchGame({ activity, onFinish }: ActivityProps<MatchActivity>) 
               }`}
             >
               {activity.pairs[i].word}
-              {matched.has(i) && <span className="ml-2 text-sm text-gray-500">{language === 'zh' ? activity.pairs[i].zh : ''}</span>}
+              {matched.has(i) && activity.pairs[i].emoji && language === 'zh' && (
+                <span className="ml-2 text-sm text-gray-500">{activity.pairs[i].zh}</span>
+              )}
             </button>
           ))}
         </div>

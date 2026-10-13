@@ -69,6 +69,12 @@ router.post(
 router.post('/', requireTeacher, (req, res, next) => videoController.create(req, res, next));
 
 /**
+ * PUT /api/videos/:id/practice
+ * Replace the lesson's practice activities (owner only)
+ */
+router.put('/:id/practice', requireTeacher, (req, res, next) => videoController.setPractice(req, res, next));
+
+/**
  * PATCH /api/videos/:id/publish
  * Publish or unpublish a video (owner only)
  * Body: { isPublished: boolean }

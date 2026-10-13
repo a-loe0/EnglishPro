@@ -2,6 +2,13 @@ import { verifyAccessToken } from './jwt';
 import { buildSystemPrompt } from './prompt';
 import { parseTutorRequest, RequestError } from './request';
 import { toTutorStream } from './stream';
+import {
+  DraftRequestError,
+  buildDraftPrompt,
+  parseDraftRequest,
+  readCompletionText,
+  sanitizeDraft,
+} from './practice';
 
 export interface Env {
   AI: Ai;
@@ -18,8 +25,71 @@ function jsonError(status: number, error: string, code: string): Response {
   return Response.json({ error, code }, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
+const DRAFT_MAX_TOKENS = 2000;
+
+// POST /api/tutor/draft: a teacher asks for practice activities for a lesson.
+async function handleDraftRequest(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return new Response(null, { status: 405, headers: { Allow: 'POST' } });
+  }
+  if (!env.JWT_SECRET) {
+    console.error('JWT_SECRET is not configured');
+    return jsonError(500, 'Tutor is not configured', 'NOT_CONFIGURED');
+  }
+
+  const auth = request.headers.get('Authorization') ?? '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
+  const user = token ? await verifyAccessToken(token, env.JWT_SECRET) : null;
+  if (!user) {
+    return jsonError(401, 'Please log in', 'UNAUTHORIZED');
+  }
+  if (user.role !== 'TEACHER') {
+    return jsonError(403, 'Only teachers can draft practice', 'FORBIDDEN');
+  }
+
+  const { success } = await env.TUTOR_LIMITER.limit({ key: user.userId });
+  if (!success) {
+    return jsonError(429, 'Too many requests. Please wait a minute.', 'RATE_LIMITED');
+  }
+
+  const rawBody = await request.text();
+  if (rawBody.length > MAX_BODY_BYTES) {
+    return jsonError(413, 'Request is too long', 'TOO_LARGE');
+  }
+
+  let draftRequest;
+  try {
+    draftRequest = parseDraftRequest(JSON.parse(rawBody));
+  } catch (err) {
+    const message = err instanceof DraftRequestError ? err.message : 'Invalid JSON body';
+    return jsonError(400, message, 'BAD_REQUEST');
+  }
+
+  let result: unknown;
+  try {
+    result = await env.AI.run(env.TUTOR_MODEL as keyof AiModels, {
+      messages: [{ role: 'user', content: buildDraftPrompt(draftRequest) }],
+      max_completion_tokens: DRAFT_MAX_TOKENS,
+      temperature: 0.4,
+      chat_template_kwargs: { enable_thinking: false },
+    } as never);
+  } catch (err) {
+    console.error('Workers AI draft request failed', err);
+    return jsonError(503, 'The tutor is resting right now. Please try again later.', 'AI_UNAVAILABLE');
+  }
+
+  const draft = sanitizeDraft(readCompletionText(result));
+  if (!draft) {
+    return jsonError(502, 'Could not draft activities. Please try again.', 'AI_BAD_RESPONSE');
+  }
+  return Response.json({ practice: draft }, { headers: { 'Cache-Control': 'no-store' } });
+}
+
 export async function handleTutorRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
+  if (url.pathname === '/api/tutor/draft') {
+    return handleDraftRequest(request, env);
+  }
   if (url.pathname !== '/api/tutor') {
     return jsonError(404, 'Not found', 'NOT_FOUND');
   }

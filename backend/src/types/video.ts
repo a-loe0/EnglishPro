@@ -17,6 +17,7 @@ export interface VideoResponse {
   views: number;
   status: 'PROCESSING' | 'READY' | 'FAILED';
   isPublished: boolean;
+  practice?: unknown;
   createdAt: string;
   updatedAt: string;
   teacher?: {

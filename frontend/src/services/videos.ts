@@ -1,5 +1,19 @@
 import api from './api';
 
+// Teacher-authored practice for one lesson (mirrors backend/src/types/practice.ts).
+export interface LessonPractice {
+  quiz: {
+    prompt: string;
+    promptZh?: string;
+    options: string[];
+    answer: number;
+    explanation?: string;
+    explanationZh?: string;
+  }[];
+  match: { word: string; zh: string }[];
+  scramble: { text: string; zh?: string }[];
+}
+
 export interface Video {
   id: string;
   teacherId: string;
@@ -13,6 +27,7 @@ export interface Video {
   views?: number;
   status: 'PROCESSING' | 'READY' | 'FAILED';
   isPublished: boolean;
+  practice?: LessonPractice | null;
   createdAt: string;
   updatedAt: string;
   teacher?: {
@@ -114,6 +129,10 @@ export const videoService = {
   async update(id: string, data: Partial<Omit<CreateVideoData, 'tempId'>>): Promise<Video> {
     const response = await api.patch(`/videos/${id}`, data);
     return response.data;
+  },
+
+  async savePractice(id: string, practice: LessonPractice): Promise<void> {
+    await api.put(`/videos/${id}/practice`, practice);
   },
 
   async delete(id: string): Promise<void> {

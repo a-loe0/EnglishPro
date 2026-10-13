@@ -8,6 +8,7 @@ import { getStorageService } from '../services/storage.service';
 import { getQueueService } from '../services/queue.service';
 import { ListVideosQuery, CreateVideoRequest } from '../types/video';
 import { handleMulterError } from '../middleware/upload';
+import { lessonPracticeSchema, isEmptyPractice } from '../types/practice';
 
 // Store temp file metadata (in production, use Redis)
 const tempFiles = new Map<string, { path: string; filename: string; size: number; mimeType: string; expiresAt: number }>();
@@ -386,6 +387,36 @@ export class VideoController {
         videoStatus: video.status,
         job: jobStatus,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PUT /api/videos/:id/practice - Replace the lesson's practice activities
+   */
+  async setPractice(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const user = (req as Request & { user: { userId: string; role: string } }).user;
+
+      const parsed = lessonPracticeSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: 'Invalid practice: ' + parsed.error.issues[0]?.message });
+        return;
+      }
+
+      const videoService = getVideoService();
+      const isOwner = await videoService.isOwner(id, user.userId);
+      if (!isOwner) {
+        res.status(403).json({ error: 'You do not have permission to edit this video' });
+        return;
+      }
+
+      // Saving an empty set clears the lesson's practice.
+      const practice = isEmptyPractice(parsed.data) ? null : parsed.data;
+      const video = await videoService.setPractice(id, practice);
+      res.json({ id: video.id, practice: video.practice });
     } catch (error) {
       next(error);
     }
