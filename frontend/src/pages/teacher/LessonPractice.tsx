@@ -51,18 +51,30 @@ export default function TeacherLessonPractice() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId]);
 
-  const hasContent = practice.quiz.length + practice.match.length + practice.scramble.length > 0;
-
   const handleDraft = async () => {
-    if (hasContent && !window.confirm(t('lpConfirmReplace'))) return;
     setDrafting(true);
     setMessage(null);
     try {
-      setPractice(await draftLessonPractice(title, description));
+      // Add the new set to what's already there (the teacher removes what she
+      // doesn't want) instead of replacing it.
+      const drafted = await draftLessonPractice(title, description);
+      setPractice((current) => ({
+        quiz: [...current.quiz, ...drafted.quiz].slice(0, 10),
+        match: [...current.match, ...drafted.match].slice(0, 8),
+        scramble: [...current.scramble, ...drafted.scramble].slice(0, 8),
+      }));
       setMessage({ type: 'success', text: t('lpDrafted') });
     } catch (err) {
-      const unavailable = err instanceof TutorError && err.code === 'AI_UNAVAILABLE';
-      setMessage({ type: 'error', text: unavailable ? t('tutorErrorUnavailable') : t('lpDraftFailed') });
+      const code = err instanceof TutorError ? err.code : null;
+      const text =
+        code === 'AI_UNAVAILABLE'
+          ? t('tutorErrorUnavailable')
+          : code === 'UNAUTHORIZED'
+            ? t('tutorErrorAuth')
+            : code === 'RATE_LIMITED'
+              ? t('tutorErrorRateLimited')
+              : t('lpDraftFailed');
+      setMessage({ type: 'error', text });
     } finally {
       setDrafting(false);
     }
