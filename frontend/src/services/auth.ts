@@ -9,6 +9,8 @@ export interface User {
   role: 'TEACHER' | 'STUDENT';
   avatarUrl?: string;
   createdAt?: string;
+  /** Anonymous visitor: lessons are open without an account. */
+  isGuest?: boolean;
 }
 
 export interface LoginCredentials {
@@ -49,6 +51,17 @@ export const authService = {
     localStorage.setItem('refreshToken', refreshToken);
 
     return response.data;
+  },
+
+  /** Give this browser its own anonymous student so no sign-in is needed. */
+  async startGuestSession(): Promise<User> {
+    const response = await api.post<AuthResponse>('/auth/guest');
+    const { accessToken, refreshToken } = response.data;
+
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+
+    return response.data.user;
   },
 
   async logout(): Promise<void> {

@@ -135,8 +135,8 @@ export function DashboardLayout({ children, sidebarItems, title }: DashboardLayo
           </ul>
         </nav>
 
-        {/* User Section */}
-        <div className="border-t border-gray-100 p-4">
+        {/* User Section (guests have no account, so nothing to sign out of) */}
+        <div className={`border-t border-gray-100 p-4 ${user?.isGuest && sidebarCollapsed ? 'hidden' : ''}`}>
           {sidebarCollapsed ? (
             <button
               onClick={handleLogout}
@@ -152,13 +152,15 @@ export function DashboardLayout({ children, sidebarItems, title }: DashboardLayo
                 <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
                 <p className="text-xs text-gray-500 capitalize">{user?.role?.toLowerCase()}</p>
               </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                title="Sign out"
-              >
-                <LogoutIcon className="w-5 h-5 text-gray-400" />
-              </button>
+              {!user?.isGuest && (
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  title="Sign out"
+                >
+                  <LogoutIcon className="w-5 h-5 text-gray-400" />
+                </button>
+              )}
             </div>
           )}
         </div>

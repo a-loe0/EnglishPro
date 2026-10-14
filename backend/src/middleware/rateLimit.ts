@@ -55,6 +55,19 @@ export const authLimiter = rateLimit({
   keyGenerator: clientKey,
 });
 
+// Rate limiter for creating guest sessions (one per new visitor, no sign-in).
+// Each call inserts a user row, so it is capped per client IP; the cap is high
+// enough for a classroom opening the site together behind one address. Tune
+// with GUEST_RATE_LIMIT_PER_MIN without a rebuild.
+export const guestLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: Number(process.env.GUEST_RATE_LIMIT_PER_MIN) || 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' },
+  keyGenerator: clientKey,
+});
+
 // Rate limiter for video uploads
 export const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -88,6 +101,7 @@ export const analyticsLimiter = rateLimit({
 export default {
   generalLimiter,
   authLimiter,
+  guestLimiter,
   uploadLimiter,
   submissionLimiter,
   analyticsLimiter,

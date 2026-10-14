@@ -71,15 +71,22 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
+  // Resolves who is using this browser. Sign-in is not required: a visitor
+  // with no session (or one that can no longer be renewed) becomes a guest.
   checkAuth: async () => {
-    if (!authService.isAuthenticated()) {
-      set({ isLoading: false, isAuthenticated: false });
-      return;
-    }
-
     set({ isLoading: true });
     try {
-      const user = await authService.getCurrentUser();
+      let user: User | null = null;
+      if (authService.isAuthenticated()) {
+        try {
+          user = await authService.getCurrentUser();
+        } catch (error) {
+          // Tokens still in place means the server was unreachable, not that
+          // the session ended. Keep them so saved progress is not orphaned.
+          if (authService.isAuthenticated()) throw error;
+        }
+      }
+      user ??= await authService.startGuestSession();
       set({
         user,
         isAuthenticated: true,

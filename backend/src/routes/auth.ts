@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   register,
   login,
+  guest,
   logout,
   refresh,
   me,
@@ -14,7 +15,7 @@ import {
 } from '../controllers/authController';
 import { authenticate } from '../middleware/auth';
 import { avatarUpload } from '../middleware/upload';
-import { authLimiter } from '../middleware/rateLimit';
+import { authLimiter, guestLimiter } from '../middleware/rateLimit';
 
 const router = Router();
 
@@ -24,6 +25,7 @@ const router = Router();
 // call it routinely on token expiry. /avatar is a public image read.
 router.post('/register', authLimiter, register);
 router.post('/login', authLimiter, login);
+router.post('/guest', guestLimiter, guest);
 router.post('/refresh', refresh);
 router.get('/avatar/:filename', serveAvatar);
 router.post('/forgot-password', authLimiter, forgotPassword);

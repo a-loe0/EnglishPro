@@ -113,6 +113,66 @@ describe('Auth API Integration Tests', () => {
     });
   });
 
+  describe('POST /api/auth/guest', () => {
+    it('should start a guest session as a student without credentials', async () => {
+      (prisma.user.create as jest.Mock).mockImplementation(async ({ data }) => ({
+        id: '123e4567-e89b-12d3-a456-426614174077',
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        avatarUrl: null,
+        createdAt: new Date(),
+      }));
+
+      const response = await request(app).post('/api/auth/guest').expect(201);
+
+      expect(response.body).toHaveProperty('accessToken');
+      expect(response.body).toHaveProperty('refreshToken');
+      expect(response.body.user.role).toBe('STUDENT');
+      expect(response.body.user.isGuest).toBe(true);
+      expect(response.body.user.email).toMatch(/^guest-.+@guest\.invalid$/);
+      expect(jwtUtils.generateTokens).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'STUDENT' }),
+        { guest: true }
+      );
+    });
+
+    it('should not let anyone sign in as a guest', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: '123',
+        email: 'guest-abc@guest.invalid',
+        passwordHash: '!guest',
+        name: 'Guest',
+        role: 'STUDENT',
+      });
+
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({ email: 'guest-abc@guest.invalid', password: '!guest' })
+        .expect(401);
+
+      expect(response.body.error).toBe('Invalid email or password');
+    });
+
+    it('should not let anyone register a guest address', async () => {
+      await request(app)
+        .post('/api/auth/register')
+        .send({ email: 'me@guest.invalid', password: 'Password123', name: 'New User', role: 'STUDENT' })
+        .expect(400);
+
+      expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('should be refused when guest access is switched off', async () => {
+      process.env.GUEST_ACCESS = 'false';
+      try {
+        await request(app).post('/api/auth/guest').expect(403);
+      } finally {
+        delete process.env.GUEST_ACCESS;
+      }
+    });
+  });
+
   describe('POST /api/auth/login', () => {
     const validLogin = {
       email: 'test@example.com',

@@ -8,15 +8,16 @@ test.describe('Authentication', () => {
   });
 
   test.describe('Home Page', () => {
-    test('should display home page with login and register buttons', async ({ page }) => {
+    test('should open lessons from the home page without an account', async ({ page }) => {
       await page.goto('/');
 
       // Check for h1 heading
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      // Home page uses "Sign in" and "Get Started"
-      await expect(page.getByRole('link', { name: /sign in/i })).toBeVisible();
-      // Use first() since there may be multiple "Get Started" buttons
-      await expect(page.getByRole('link', { name: /get started/i }).first()).toBeVisible();
+      // No sign-up prompts: visitors go straight to the lessons
+      await expect(page.getByRole('link', { name: /get started|create.*account/i })).toHaveCount(0);
+      // Use first() since there are several "Start Learning" buttons
+      await page.getByRole('link', { name: /start learning/i }).first().click();
+      await expect(page).toHaveURL(/student\/lessons/);
     });
   });
 
@@ -97,21 +98,17 @@ test.describe('Authentication', () => {
   });
 
   test.describe('Protected Routes', () => {
-    test('should redirect unauthenticated users from dashboard', async ({ page }) => {
+    test('should send visitors without an account to the student dashboard', async ({ page }) => {
       await page.goto('/dashboard');
 
-      // Should either redirect to login or home
-      await page.waitForTimeout(1000);
-      const url = page.url();
-      expect(url.includes('login') || url.endsWith('/')).toBe(true);
+      await expect(page).toHaveURL(/student\/dashboard/);
     });
 
-    test('should redirect unauthenticated users from student routes', async ({ page }) => {
+    test('should let visitors without an account open student routes', async ({ page }) => {
       await page.goto('/student/dashboard');
 
       await page.waitForTimeout(1000);
-      const url = page.url();
-      expect(url.includes('login') || url.endsWith('/')).toBe(true);
+      expect(page.url()).toContain('/student/dashboard');
     });
 
     test('should redirect unauthenticated users from teacher routes', async ({ page }) => {

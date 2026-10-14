@@ -4,16 +4,17 @@ import { useAuthStore } from '../store/authStore';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, isLoading, error, clearError, isAuthenticated } = useAuthStore();
+  const { login, isLoading, error, clearError, isAuthenticated, user } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Guests browse without an account, so they can still reach this form.
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !user?.isGuest) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   useEffect(() => {
     return () => clearError();

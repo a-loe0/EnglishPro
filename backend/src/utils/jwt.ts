@@ -6,6 +6,9 @@ const JWT_RESET_SECRET = process.env.JWT_RESET_SECRET || 'fallback-reset-secret'
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 const JWT_RESET_EXPIRES_IN = '1h'; // Reset tokens expire in 1 hour
+// A guest has no password to sign back in with, so the refresh token is the
+// only thing tying a browser to its saved progress. Keep it alive far longer.
+const GUEST_REFRESH_EXPIRES_IN = process.env.GUEST_REFRESH_EXPIRES_IN || '180d';
 
 export interface TokenPayload {
   userId: string;
@@ -17,8 +20,8 @@ export function generateAccessToken(payload: TokenPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
 }
 
-export function generateRefreshToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN } as jwt.SignOptions);
+export function generateRefreshToken(payload: TokenPayload, expiresIn: string = JWT_REFRESH_EXPIRES_IN): string {
+  return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn } as jwt.SignOptions);
 }
 
 export function verifyAccessToken(token: string): TokenPayload {
@@ -29,10 +32,13 @@ export function verifyRefreshToken(token: string): TokenPayload {
   return jwt.verify(token, JWT_REFRESH_SECRET) as TokenPayload;
 }
 
-export function generateTokens(payload: TokenPayload) {
+export function generateTokens(payload: TokenPayload, options: { guest?: boolean } = {}) {
   return {
     accessToken: generateAccessToken(payload),
-    refreshToken: generateRefreshToken(payload),
+    refreshToken: generateRefreshToken(
+      payload,
+      options.guest ? GUEST_REFRESH_EXPIRES_IN : JWT_REFRESH_EXPIRES_IN
+    ),
   };
 }
 
