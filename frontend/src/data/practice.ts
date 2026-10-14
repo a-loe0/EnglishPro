@@ -8,7 +8,7 @@ export interface Bilingual {
   zh: string;
 }
 
-export type ActivityCategory = 'practice' | 'games' | 'quizzes';
+export type ActivityCategory = 'vocab' | 'practice' | 'games' | 'quizzes';
 export type Level = 'beginner' | 'intermediate';
 
 interface ActivityBase {
@@ -70,7 +70,15 @@ export interface QuizActivity extends ActivityBase {
   questions: QuizQuestion[];
 }
 
+// Flip through a lesson's words and listen to the teacher say each one.
+export interface VocabActivity extends ActivityBase {
+  kind: 'vocab';
+  lessonId: string;
+  words: { word: string; zh: string; example?: string; audio?: string }[];
+}
+
 export type Activity =
+  | VocabActivity
   | PositionActivity
   | SortActivity
   | ScrambleActivity
@@ -277,6 +285,23 @@ export function lessonActivities(lesson: { id: string; title: string; practice?:
   });
   const out: Activity[] = [];
 
+  // Practice saved before vocabulary existed has no `vocab` key.
+  const vocab = p.vocab ?? [];
+  if (vocab.length > 0) {
+    out.push({
+      ...base,
+      id: `lesson-${lesson.id}-vocab`,
+      kind: 'vocab',
+      category: 'vocab',
+      icon: '🔊',
+      title: named('Vocabulary', '單字複習'),
+      description: {
+        en: 'Review the words from this lesson and listen to how they sound.',
+        zh: '複習這堂課的單字，聽聽看怎麼唸。',
+      },
+      words: vocab,
+    });
+  }
   if (p.quiz.length > 0) {
     out.push({
       ...base,

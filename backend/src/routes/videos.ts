@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { videoController } from '../controllers/videoController';
 import { authenticate } from '../middleware/auth';
-import { videoUpload, handleMulterError } from '../middleware/upload';
+import { videoUpload, audioUpload, AUDIO_MAX_SIZE, handleMulterError } from '../middleware/upload';
 
 const router = Router();
 
@@ -10,6 +10,12 @@ const router = Router();
  * Get video thumbnail image (public - no auth required for img tags)
  */
 router.get('/:id/thumbnail', (req, res, next) => videoController.thumbnail(req, res, next));
+
+/**
+ * GET /api/videos/:id/vocab-audio/:filename
+ * Play a vocabulary recording (public - <audio> tags can't send auth headers)
+ */
+router.get('/:id/vocab-audio/:filename', (req, res, next) => videoController.vocabAudio(req, res, next));
 
 // Middleware to check if user is a teacher
 const requireTeacher = (req: Request, res: Response, next: NextFunction): void => {
@@ -73,6 +79,26 @@ router.post('/', requireTeacher, (req, res, next) => videoController.create(req,
  * Replace the lesson's practice activities (owner only)
  */
 router.put('/:id/practice', requireTeacher, (req, res, next) => videoController.setPractice(req, res, next));
+
+/**
+ * POST /api/videos/:id/vocab-audio
+ * Upload a pronunciation recording for one vocabulary word (owner only).
+ * Returns the filename to store on the word in the lesson's practice.
+ */
+router.post(
+  '/:id/vocab-audio',
+  requireTeacher,
+  audioUpload.single('audio'),
+  (err: Error, req: Request, res: Response, next: NextFunction): void => {
+    if (err) {
+      const { status, message } = handleMulterError(err, AUDIO_MAX_SIZE);
+      res.status(status).json({ error: message });
+      return;
+    }
+    next();
+  },
+  (req: Request, res: Response, next: NextFunction) => videoController.uploadVocabAudio(req, res, next)
+);
 
 /**
  * PATCH /api/videos/:id/publish

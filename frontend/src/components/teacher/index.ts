@@ -4,3 +4,4 @@ export { QuickActions } from './QuickActions';
 export { TopVideos } from './TopVideos';
 export { VideoUploader } from './VideoUploader';
 export { TranscodeProgress } from './TranscodeProgress';
+export { VocabAudioControl } from './VocabAudioControl';

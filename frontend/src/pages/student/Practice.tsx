@@ -13,6 +13,7 @@ import {
   starsFor,
 } from '../../services/practiceProgress';
 import {
+  VocabReview,
   PositionGame,
   SortGame,
   ScrambleGame,
@@ -32,6 +33,8 @@ function Stars({ count }: { count: number }) {
 
 function ActivityRunner({ activity, onFinish }: { activity: Activity; onFinish: (s: number, t: number) => void }) {
   switch (activity.kind) {
+    case 'vocab':
+      return <VocabReview activity={activity} onFinish={onFinish} />;
     case 'position':
       return <PositionGame activity={activity} onFinish={onFinish} />;
     case 'sort':
@@ -77,6 +80,7 @@ export default function StudentPractice() {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'all', label: t('prTabAll') },
+    { id: 'vocab', label: t('prTabVocab') },
     { id: 'practice', label: t('prTabPractice') },
     { id: 'games', label: t('prTabGames') },
     { id: 'quizzes', label: t('prTabQuizzes') },

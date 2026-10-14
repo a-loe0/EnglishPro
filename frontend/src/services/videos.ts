@@ -2,6 +2,8 @@ import api from './api';
 
 // Teacher-authored practice for one lesson (mirrors backend/src/types/practice.ts).
 export interface LessonPractice {
+  // `audio` is the filename of the teacher's recording of the word, if any.
+  vocab: { word: string; zh: string; example?: string; audio?: string }[];
   quiz: {
     prompt: string;
     promptZh?: string;
@@ -135,6 +137,16 @@ export const videoService = {
     await api.put(`/videos/${id}/practice`, practice);
   },
 
+  // Returns the filename to keep on the vocabulary word.
+  async uploadVocabAudio(id: string, file: Blob, filename: string): Promise<string> {
+    const formData = new FormData();
+    formData.append('audio', file, filename);
+    const response = await api.post(`/videos/${id}/vocab-audio`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.audio;
+  },
+
   async delete(id: string): Promise<void> {
     await api.delete(`/videos/${id}`);
   },
@@ -159,6 +171,10 @@ export const videoService = {
 
   getStreamUrl(id: string): string {
     return `${api.defaults.baseURL}/videos/${id}/stream/master.m3u8`;
+  },
+
+  getVocabAudioUrl(id: string, audio: string): string {
+    return `${api.defaults.baseURL}/videos/${id}/vocab-audio/${audio}`;
   },
 
   getThumbnailUrl(id: string): string {

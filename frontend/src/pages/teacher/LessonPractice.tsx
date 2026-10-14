@@ -5,9 +5,10 @@ import { Button, Card, Spinner } from '../../components/common';
 import { videoService, type LessonPractice } from '../../services/videos';
 import { draftLessonPractice, TutorError } from '../../services/tutor';
 import { teacherSidebarItems } from '../../config/teacherSidebar';
+import { VocabAudioControl } from '../../components/teacher';
 import { useTranslation } from '../../i18n';
 
-const EMPTY: LessonPractice = { quiz: [], match: [], scramble: [] };
+const EMPTY: LessonPractice = { vocab: [], quiz: [], match: [], scramble: [] };
 
 const inputClass =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
@@ -40,7 +41,8 @@ export default function TeacherLessonPractice() {
         const video = await videoService.getById(videoId);
         setTitle(video.title);
         setDescription(video.description);
-        setPractice(video.practice ?? EMPTY);
+        // Practice saved before vocabulary existed has no `vocab` key.
+        setPractice({ ...EMPTY, ...video.practice });
       } catch {
         setMessage({ type: 'error', text: t('lpLoadFailed') });
       } finally {
@@ -59,6 +61,7 @@ export default function TeacherLessonPractice() {
       // doesn't want) instead of replacing it.
       const drafted = await draftLessonPractice(title, description);
       setPractice((current) => ({
+        ...current,
         quiz: [...current.quiz, ...drafted.quiz].slice(0, 10),
         match: [...current.match, ...drafted.match].slice(0, 8),
         scramble: [...current.scramble, ...drafted.scramble].slice(0, 8),
@@ -82,6 +85,9 @@ export default function TeacherLessonPractice() {
 
   // Drop rows the teacher left half-filled so one blank field can't block saving.
   const cleaned = (): LessonPractice => ({
+    vocab: practice.vocab
+      .map((v) => ({ word: v.word.trim(), zh: v.zh.trim(), example: v.example?.trim() || undefined, audio: v.audio }))
+      .filter((v) => v.word && v.zh),
     quiz: practice.quiz
       .map((q) => {
         // Keep the correct answer pointing at the same option after blanks are dropped.
@@ -129,6 +135,11 @@ export default function TeacherLessonPractice() {
     }
   };
 
+  const setVocab = (i: number, patch: Partial<LessonPractice['vocab'][number]>) =>
+    setPractice((current) => ({
+      ...current,
+      vocab: current.vocab.map((v, idx) => (idx === i ? { ...v, ...patch } : v)),
+    }));
   const setQuiz = (i: number, patch: Partial<LessonPractice['quiz'][number]>) =>
     setPractice({ ...practice, quiz: practice.quiz.map((q, idx) => (idx === i ? { ...q, ...patch } : q)) });
   const setMatch = (i: number, patch: Partial<LessonPractice['match'][number]>) =>
@@ -182,6 +193,66 @@ export default function TeacherLessonPractice() {
             {message.text}
           </div>
         )}
+
+        {/* Vocabulary */}
+        <Card className="mb-6">
+          <h3 className="mb-1 text-lg font-semibold text-gray-900">🔊 {t('lpVocab')}</h3>
+          <p className="mb-4 text-sm text-gray-500">{t('lpVocabHelp')}</p>
+          <div className="space-y-4">
+            {practice.vocab.map((v, i) => (
+              <div key={i} className="rounded-lg border border-gray-200 p-3">
+                <div className="mb-2 flex items-center gap-2">
+                  <input
+                    className={inputClass}
+                    placeholder={t('lpEnglishWord')}
+                    aria-label={`${t('lpVocab')} ${t('lpEnglishWord')} ${i + 1}`}
+                    value={v.word}
+                    onChange={(e) => setVocab(i, { word: e.target.value })}
+                  />
+                  <input
+                    className={inputClass}
+                    placeholder={t('lpChinese')}
+                    aria-label={`${t('lpVocab')} ${t('lpEnglishWord')} ${i + 1} ${t('lpChinese')}`}
+                    value={v.zh}
+                    onChange={(e) => setVocab(i, { zh: e.target.value })}
+                  />
+                  <RemoveButton
+                    label={t('lpRemove')}
+                    onClick={() => setPractice({ ...practice, vocab: practice.vocab.filter((_, idx) => idx !== i) })}
+                  />
+                </div>
+                <input
+                  className={`${inputClass} mb-2`}
+                  placeholder={t('lpExample')}
+                  aria-label={`${t('lpVocab')} ${t('lpEnglishWord')} ${i + 1} ${t('lpExample')}`}
+                  value={v.example ?? ''}
+                  onChange={(e) => setVocab(i, { example: e.target.value })}
+                />
+                {videoId && (
+                  <VocabAudioControl
+                    videoId={videoId}
+                    audio={v.audio}
+                    label={v.word.trim() || `${t('lpEnglishWord')} ${i + 1}`}
+                    onChange={(audio) => {
+                      setVocab(i, { audio });
+                      if (audio) setMessage({ type: 'success', text: t('lpAudioUnsaved') });
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          {practice.vocab.length < 30 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-3"
+              onClick={() => setPractice({ ...practice, vocab: [...practice.vocab, { word: '', zh: '' }] })}
+            >
+              + {t('lpAddWord')}
+            </Button>
+          )}
+        </Card>
 
         {/* Quiz */}
         <Card className="mb-6">
