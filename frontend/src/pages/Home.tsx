@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 export default function Home() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { user } = useAuthStore();
 
-  const dashboardLink = user?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
+  // Lessons are open to every visitor, so nothing here asks for an account.
+  const isTeacher = user?.role === 'TEACHER';
+  const lessonsLink = '/student/lessons';
 
   return (
     <div className="min-h-screen bg-bg-light relative overflow-hidden">
@@ -25,29 +27,12 @@ export default function Home() {
             EnglishGoPro
           </Link>
           <nav className="flex items-center gap-4">
-            {isAuthenticated ? (
-              <Link
-                to={dashboardLink}
-                className="h-10 px-6 bg-gradient-to-r from-primary to-accent text-white font-medium rounded-lg flex items-center hover:shadow-[0_4px_20px_rgba(99,102,241,0.4)] transition-all"
-              >
-                Go to Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="text-sm font-medium text-gray-600 hover:text-primary transition-colors px-4 py-2"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  to="/register"
-                  className="h-10 px-6 bg-gradient-to-r from-primary to-accent text-white font-medium rounded-lg flex items-center hover:shadow-[0_4px_20px_rgba(99,102,241,0.4)] transition-all"
-                >
-                  Get Started
-                </Link>
-              </>
-            )}
+            <Link
+              to={isTeacher ? '/teacher/dashboard' : lessonsLink}
+              className="h-10 px-6 bg-gradient-to-r from-primary to-accent text-white font-medium rounded-lg flex items-center hover:shadow-[0_4px_20px_rgba(99,102,241,0.4)] transition-all"
+            >
+              {isTeacher ? 'Go to Dashboard' : 'Start Learning'}
+            </Link>
           </nav>
         </div>
       </header>
@@ -73,11 +58,11 @@ export default function Home() {
             {/* CTA Button */}
             <div className="flex items-center justify-center animate-[fadeInUp_0.6s_ease-out_0.3s_both]">
               <Link
-                to="/register"
+                to={lessonsLink}
                 className="group relative h-14 px-8 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl overflow-hidden hover:shadow-[0_8px_30px_rgba(99,102,241,0.4)] transition-all flex items-center justify-center"
               >
                 <span className="relative z-10 flex items-center gap-2">
-                  Get Started Free
+                  Start Learning Free
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -215,13 +200,13 @@ export default function Home() {
                 Ready to start your journey?
               </h2>
               <p className="text-xl text-white/80 mb-10 max-w-xl mx-auto">
-                Join thousands of students improving their English every day
+                Every lesson is free to watch — no account needed
               </p>
               <Link
-                to="/register"
+                to={lessonsLink}
                 className="inline-flex items-center gap-2 h-14 px-10 bg-white text-primary font-semibold rounded-xl hover:shadow-[0_8px_30px_rgba(0,0,0,0.2)] transition-all hover:scale-105"
               >
-                Create Free Account
+                Browse Lessons
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -245,6 +230,7 @@ export default function Home() {
                 <Link to="/contact" className="hover:text-primary transition-colors">Contact</Link>
                 <Link to="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
                 <Link to="/terms" className="hover:text-primary transition-colors">Terms</Link>
+                <Link to="/login" className="hover:text-primary transition-colors">Teacher sign in</Link>
               </nav>
             </div>
             <p className="text-sm text-gray-400">

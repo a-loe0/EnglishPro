@@ -9,6 +9,7 @@ vi.mock('../services/auth', () => ({
     register: vi.fn(),
     logout: vi.fn(),
     getCurrentUser: vi.fn(),
+    startGuestSession: vi.fn(),
     isAuthenticated: vi.fn(),
   },
 }));
@@ -178,8 +179,24 @@ describe('authStore', () => {
   });
 
   describe('checkAuth', () => {
-    it('should set isAuthenticated false if not authenticated', async () => {
+    const mockGuest = { id: 'g1', email: 'guest-1@guest.invalid', name: 'Guest', role: 'STUDENT' as const, isGuest: true };
+
+    it('should start a guest session when there is no token', async () => {
       vi.mocked(authService.isAuthenticated).mockReturnValue(false);
+      vi.mocked(authService.startGuestSession).mockResolvedValue(mockGuest);
+
+      await useAuthStore.getState().checkAuth();
+
+      const state = useAuthStore.getState();
+      expect(authService.getCurrentUser).not.toHaveBeenCalled();
+      expect(state.user).toEqual(mockGuest);
+      expect(state.isAuthenticated).toBe(true);
+      expect(state.isLoading).toBe(false);
+    });
+
+    it('should stay signed out if the guest session cannot be started', async () => {
+      vi.mocked(authService.isAuthenticated).mockReturnValue(false);
+      vi.mocked(authService.startGuestSession).mockRejectedValue(new Error('Network error'));
 
       await useAuthStore.getState().checkAuth();
 
@@ -200,13 +217,27 @@ describe('authStore', () => {
       expect(state.isLoading).toBe(false);
     });
 
-    it('should clear auth state if getCurrentUser fails', async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(true);
+    it('should fall back to a guest when the saved session has ended', async () => {
+      // The API client drops the tokens once a refresh is rejected.
+      vi.mocked(authService.isAuthenticated).mockReturnValueOnce(true).mockReturnValue(false);
       vi.mocked(authService.getCurrentUser).mockRejectedValue(new Error('Token expired'));
+      vi.mocked(authService.startGuestSession).mockResolvedValue(mockGuest);
 
       await useAuthStore.getState().checkAuth();
 
       const state = useAuthStore.getState();
+      expect(state.user).toEqual(mockGuest);
+      expect(state.isAuthenticated).toBe(true);
+    });
+
+    it('should keep the saved session when the server is unreachable', async () => {
+      vi.mocked(authService.isAuthenticated).mockReturnValue(true);
+      vi.mocked(authService.getCurrentUser).mockRejectedValue(new Error('Network error'));
+
+      await useAuthStore.getState().checkAuth();
+
+      const state = useAuthStore.getState();
+      expect(authService.startGuestSession).not.toHaveBeenCalled();
       expect(state.user).toBeNull();
       expect(state.isAuthenticated).toBe(false);
     });

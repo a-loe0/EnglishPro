@@ -46,10 +46,12 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
+          // Refresh failed: drop the dead session and start over. Lessons are
+          // open to guests, so the reload continues as one instead of asking
+          // the visitor to sign in (teacher pages still send them to /login).
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
+          window.location.reload();
         }
       }
     }

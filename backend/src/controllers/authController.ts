@@ -12,8 +12,23 @@ import { getStorageService } from '../services/storage.service';
 import { extname } from 'path';
 import { writeFile, unlink } from 'fs/promises';
 import { sendPasswordResetEmail } from '../utils/email';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
+
+// Guests are ordinary STUDENT rows so progress tracking works unchanged. They
+// are told apart by a reserved address (.invalid can never be a real domain)
+// and a password hash no password can match, so nobody can sign in as one.
+const GUEST_EMAIL_DOMAIN = '@guest.invalid';
+const GUEST_PASSWORD_HASH = '!guest';
+
+export function isGuestEmail(email: string): boolean {
+  return email.toLowerCase().endsWith(GUEST_EMAIL_DOMAIN);
+}
+
+function withGuestFlag<T extends { email: string }>(user: T): T & { isGuest: boolean } {
+  return { ...user, isGuest: isGuestEmail(user.email) };
+}
 
 /**
  * POST /api/auth/register
@@ -26,6 +41,10 @@ export async function register(
 ): Promise<void> {
   try {
     const data = registerSchema.parse(req.body);
+
+    if (isGuestEmail(data.email)) {
+      throw createError('Invalid email address', 400);
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -88,7 +107,7 @@ export async function login(
       where: { email: data.email },
     });
 
-    if (!user) {
+    if (!user || isGuestEmail(user.email)) {
       throw createError('Invalid email or password', 401);
     }
 
@@ -114,6 +133,53 @@ export async function login(
         role: user.role,
         avatarUrl: user.avatarUrl,
       },
+      ...tokens,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * POST /api/auth/guest
+ * Start a guest session: lessons are open to every visitor, so a browser with
+ * no account gets its own anonymous student to hang progress on.
+ */
+export async function guest(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (process.env.GUEST_ACCESS === 'false') {
+      throw createError('Guest access is disabled', 403);
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        email: `guest-${randomUUID()}${GUEST_EMAIL_DOMAIN}`,
+        passwordHash: GUEST_PASSWORD_HASH,
+        name: 'Guest',
+        role: 'STUDENT',
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        avatarUrl: true,
+        createdAt: true,
+      },
+    });
+
+    const tokens = generateTokens(
+      { userId: user.id, email: user.email, role: user.role },
+      { guest: true }
+    );
+
+    res.status(201).json({
+      message: 'Guest session started',
+      user: withGuestFlag(user),
       ...tokens,
     });
   } catch (error) {
@@ -159,11 +225,14 @@ export async function refresh(
     }
 
     // Generate new tokens
-    const tokens = generateTokens({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    const tokens = generateTokens(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      { guest: isGuestEmail(user.email) }
+    );
 
     res.json({
       message: 'Token refreshed',
@@ -204,7 +273,7 @@ export async function me(
       throw createError('User not found', 404);
     }
 
-    res.json({ user });
+    res.json({ user: withGuestFlag(user) });
   } catch (error) {
     next(error);
   }
@@ -243,7 +312,7 @@ export async function updateProfile(
       },
     });
 
-    res.json({ user });
+    res.json({ user: withGuestFlag(user) });
   } catch (error) {
     next(error);
   }
@@ -280,6 +349,10 @@ export async function changePassword(
 
     if (!user) {
       throw createError('User not found', 404);
+    }
+
+    if (isGuestEmail(user.email)) {
+      throw createError('Guests do not have a password', 403);
     }
 
     // Verify current password
@@ -355,7 +428,7 @@ export async function uploadAvatar(
       },
     });
 
-    res.json({ user });
+    res.json({ user: withGuestFlag(user) });
   } catch (error) {
     next(error);
   }
@@ -407,7 +480,7 @@ export async function forgotPassword(
     });
 
     // Always return success to prevent email enumeration
-    if (!user) {
+    if (!user || isGuestEmail(user.email)) {
       res.json({ message: 'If an account exists, a reset link has been sent.' });
       return;
     }

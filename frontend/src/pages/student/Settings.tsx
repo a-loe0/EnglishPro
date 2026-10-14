@@ -12,6 +12,7 @@ export default function StudentSettings() {
   const t = useTranslation();
   const { user, setUser, logout } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isGuest = !!user?.isGuest;
 
   const [name, setName] = useState(user?.name || '');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -96,7 +97,7 @@ export default function StudentSettings() {
       // Ignore logout errors
     }
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   return (
@@ -148,18 +149,20 @@ export default function StudentSettings() {
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('profile')}</h3>
             <form onSubmit={handleProfileUpdate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('email')}
-                </label>
-                <input
-                  type="email"
-                  value={user?.email || ''}
-                  disabled
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
-                />
-                <p className="text-xs text-gray-400 mt-1">{t('emailCannotChange')}</p>
-              </div>
+              {!isGuest && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('email')}
+                  </label>
+                  <input
+                    type="email"
+                    value={user?.email || ''}
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">{t('emailCannotChange')}</p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t('displayName')}
@@ -182,6 +185,9 @@ export default function StudentSettings() {
             </form>
           </Card>
 
+          {/* Guests have no email, password or account to sign out of */}
+          {!isGuest && (
+          <>
           {/* Change Password */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('changePassword')}</h3>
@@ -238,6 +244,8 @@ export default function StudentSettings() {
               {t('signOut')}
             </Button>
           </Card>
+          </>
+          )}
         </div>
       </div>
     </DashboardLayout>
