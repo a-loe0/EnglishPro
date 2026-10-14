@@ -323,7 +323,7 @@ export class FFmpegService extends EventEmitter {
    * Convert any audio (or the audio track of a video) to a small mono MP3,
    * which every browser can play.
    */
-  async toMp3(inputPath: string, outputPath: string): Promise<string> {
+  async toMp3(inputPath: string, outputPath: string, maxSeconds?: number): Promise<string> {
     return new Promise((resolve, reject) => {
       const args = [
         '-i', inputPath,
@@ -331,6 +331,8 @@ export class FFmpegService extends EventEmitter {
         '-ac', '1',
         '-ar', '44100',
         '-b:a', '96k',
+        ...(maxSeconds ? ['-t', String(maxSeconds)] : []),
+        '-f', 'mp3',
         '-y',
         outputPath,
       ];

@@ -251,8 +251,16 @@ export class VideoService {
       throw new Error('Video not found');
     }
 
+    // Students' pronunciation recordings go with the lesson (rows cascade).
+    const submissions = await this.prisma.pronunciationSubmission.findMany({
+      where: { videoId: id },
+      select: { id: true },
+    });
+
     // Delete database record first
     await this.prisma.video.delete({ where: { id } });
+
+    await Promise.all(submissions.map((s) => storage.deleteSubmissionAudio(s.id)));
 
     // Delete video files
     await storage.deleteDir(storage.getHlsDir(id));

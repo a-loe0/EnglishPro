@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../../i18n';
 import type { VocabActivity } from '../../data/practice';
 import { videoService } from '../../services/videos';
+import { submissionService, type Submission } from '../../services/submissions';
 import type { ActivityProps } from './types';
+import { SayIt } from './SayIt';
 
 const canSpeak = () => typeof window !== 'undefined' && 'speechSynthesis' in window;
 
@@ -12,6 +14,24 @@ export function VocabReview({ activity, onFinish }: ActivityProps<VocabActivity>
   const [revealed, setRevealed] = useState(false);
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // What the student has sent the teacher for this lesson, by word.
+  const [sent, setSent] = useState<Record<string, Submission>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    submissionService
+      .mine()
+      .then((all) => {
+        if (cancelled) return;
+        setSent(Object.fromEntries(all.filter((s) => s.videoId === activity.lessonId).map((s) => [s.word, s])));
+      })
+      .catch(() => {
+        // Reviewing words still works without the student's recordings.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activity.lessonId]);
 
   const total = activity.words.length;
   const item = activity.words[index];
@@ -63,8 +83,26 @@ export function VocabReview({ activity, onFinish }: ActivityProps<VocabActivity>
     go(index + 1);
   };
 
+  // Words the teacher has replied about, so the student can jump to them.
+  const replied = activity.words.map((w, i) => ({ w, i })).filter(({ w }) => sent[w.word]?.reviewedAt);
+
   return (
     <div>
+      {replied.length > 0 && (
+        <div className="mb-4 rounded-xl bg-green-50 p-3 text-sm text-green-800">
+          💬 {t('sayRepliedAbout')}{' '}
+          {replied.map(({ w, i }) => (
+            <button
+              key={w.word}
+              type="button"
+              onClick={() => go(i)}
+              className="mr-2 font-semibold underline hover:no-underline"
+            >
+              {w.word}
+            </button>
+          ))}
+        </div>
+      )}
       <p className="mb-1 text-sm text-gray-500">
         {t('prWord')} {index + 1} / {total}
       </p>
@@ -103,6 +141,14 @@ export function VocabReview({ activity, onFinish }: ActivityProps<VocabActivity>
           {revealed ? t('prHideMeaning') : t('prShowMeaning')}
         </button>
       </div>
+
+      <SayIt
+        key={item.word}
+        lessonId={activity.lessonId}
+        word={item.word}
+        submission={sent[item.word]}
+        onSent={(submission) => setSent((current) => ({ ...current, [item.word]: submission }))}
+      />
 
       <div className="flex justify-between gap-3">
         <button

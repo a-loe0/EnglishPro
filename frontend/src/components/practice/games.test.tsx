@@ -14,6 +14,11 @@ import { PositionGame } from './PositionGame';
 import { MatchGame } from './MatchGame';
 import { VocabReview } from './VocabReview';
 
+// No recordings sent yet; keeps the flashcards off the network.
+vi.mock('../../services/submissions', () => ({
+  submissionService: { mine: vi.fn().mockResolvedValue([]) },
+}));
+
 const wrap = (ui: React.ReactElement) => render(<LanguageProvider>{ui}</LanguageProvider>);
 
 describe('QuizGame', () => {
@@ -116,6 +121,9 @@ describe('VocabReview', () => {
     await user.click(screen.getByRole('button', { name: /^next$/i }));
     expect(screen.getByText('bus')).toBeInTheDocument();
     expect(screen.queryByText('公車')).not.toBeInTheDocument();
+
+    // The student can record themselves on every word.
+    expect(screen.getByRole('button', { name: /record yourself/i })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /finish/i }));
     expect(onFinish).toHaveBeenCalledExactlyOnceWith(2, 2);

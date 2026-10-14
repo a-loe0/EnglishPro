@@ -32,6 +32,7 @@ model User {
   courses     Course[]     @relation("TeacherCourses")
   videos      Video[]      @relation("TeacherVideos")
   progress    Progress[]   @relation("StudentProgress")
+  pronunciationSubmissions PronunciationSubmission[]
 
   @@map("users")
 }
@@ -78,6 +79,7 @@ model Video {
   teacher     User         @relation("TeacherVideos", fields: [teacherId], references: [id], onDelete: Cascade)
   course      Course?      @relation(fields: [courseId], references: [id], onDelete: SetNull)
   progress    Progress[]
+  pronunciationSubmissions PronunciationSubmission[]
 
   // Indexes
   @@index([teacherId])
@@ -108,4 +110,29 @@ model Progress {
   @@index([completed])
   @@index([lastWatchedAt(sort: Desc)])
   @@map("progress")
+}
+
+// A student's recording of one vocabulary word from a lesson, sent to the
+// teacher, who replies with written and/or recorded feedback. One per student
+// per word: sending again replaces the recording and clears the old feedback.
+// Audio lives on disk (see StorageService.getSubmissionAudioPath).
+model PronunciationSubmission {
+  id               String    @id @default(uuid())
+  studentId        String    @map("student_id")
+  videoId          String    @map("video_id")
+  word             String
+  feedbackText     String?   @map("feedback_text")
+  hasFeedbackAudio Boolean   @default(false) @map("has_feedback_audio")
+  reviewedAt       DateTime? @map("reviewed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  student User  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  video   Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@unique([studentId, videoId, word])
+  @@index([videoId])
+  @@index([reviewedAt])
+  @@map("pronunciation_submissions")
 }

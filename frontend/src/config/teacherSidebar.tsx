@@ -24,6 +24,12 @@ const StudentsIcon = () => (
   </svg>
 );
 
+const PronunciationIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-14 0m7 7v4m-4 0h8M12 15a4 4 0 004-4V6a4 4 0 00-8 0v5a4 4 0 004 4z" />
+  </svg>
+);
+
 const AnalyticsIcon = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -42,6 +48,7 @@ export const teacherSidebarItems: SidebarItem[] = [
   { icon: <CoursesIcon />, label: 'Courses', href: '/teacher/courses' },
   { icon: <VideosIcon />, label: 'Videos', href: '/teacher/videos' },
   { icon: <StudentsIcon />, label: 'Students', href: '/teacher/students' },
+  { icon: <PronunciationIcon />, label: 'Pronunciation', href: '/teacher/pronunciation' },
   { icon: <AnalyticsIcon />, label: 'Analytics', href: '/teacher/analytics' },
   { icon: <SettingsIcon />, label: 'Settings', href: '/teacher/settings' },
 ];

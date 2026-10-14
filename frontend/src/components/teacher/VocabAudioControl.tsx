@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { videoService } from '../../services/videos';
 import { useTranslation } from '../../i18n';
+import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 
 interface Props {
   videoId: string;
@@ -17,24 +18,9 @@ const buttonClass =
 // Record or upload the teacher's pronunciation of one vocabulary word.
 export function VocabAudioControl({ videoId, audio, onChange, label }: Props) {
   const t = useTranslation();
-  const [recording, setRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  // Release the microphone if the teacher leaves mid-recording.
-  useEffect(
-    () => () => {
-      const recorder = recorderRef.current;
-      if (recorder && recorder.state !== 'inactive') {
-        recorder.onstop = null;
-        recorder.stop();
-      }
-      recorder?.stream.getTracks().forEach((track) => track.stop());
-    },
-    [],
-  );
 
   const upload = async (file: Blob, filename: string) => {
     setUploading(true);
@@ -49,34 +35,10 @@ export function VocabAudioControl({ videoId, audio, onChange, label }: Props) {
     }
   };
 
-  const startRecording = async () => {
-    setError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-      recorder.onstop = () => {
-        stream.getTracks().forEach((track) => track.stop());
-        setRecording(false);
-        const type = recorder.mimeType || 'audio/webm';
-        // Safari records mp4, other browsers webm; the server converts either.
-        upload(new Blob(chunks, { type }), type.includes('mp4') ? 'recording.m4a' : 'recording.webm');
-      };
-      recorderRef.current = recorder;
-      recorder.start();
-      setRecording(true);
-    } catch {
-      setError(t('lpMicFailed'));
-    }
-  };
-
-  const toggleRecording = () => {
-    if (recording) recorderRef.current?.stop();
-    else startRecording();
-  };
+  const { recording, toggle: toggleRecording } = useAudioRecorder(
+    ({ blob, filename }) => upload(blob, filename),
+    () => setError(t('lpMicFailed')),
+  );
 
   return (
     <div>
@@ -86,7 +48,10 @@ export function VocabAudioControl({ videoId, audio, onChange, label }: Props) {
           aria-pressed={recording}
           aria-label={`${recording ? t('lpStopRecording') : t('lpRecord')}: ${label}`}
           disabled={uploading}
-          onClick={toggleRecording}
+          onClick={() => {
+            setError(null);
+            toggleRecording();
+          }}
           className={recording ? 'rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700' : buttonClass}
         >
           {recording ? `■ ${t('lpStopRecording')}` : `🎙 ${t('lpRecord')}`}

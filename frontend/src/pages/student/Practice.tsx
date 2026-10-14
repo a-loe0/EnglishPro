@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useLanguage } from '../../i18n';
 import { activities, lessonActivities, type Activity, type ActivityCategory } from '../../data/practice';
 import { videoService } from '../../services/videos';
+import { submissionService } from '../../services/submissions';
 import {
   loadPracticeProgress,
   recordPracticeResult,
@@ -71,6 +72,23 @@ export default function StudentPractice() {
     };
   }, []);
 
+  // Lessons where the teacher has replied to one of this student's recordings.
+  const [repliedLessons, setRepliedLessons] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let cancelled = false;
+    submissionService
+      .mine()
+      .then((all) => {
+        if (!cancelled) setRepliedLessons(new Set(all.filter((s) => s.reviewedAt).map((s) => s.videoId)));
+      })
+      .catch(() => {
+        // The page works without it.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [tab, setTab] = useState<Tab>('all');
   const [progress, setProgress] = useState(() => loadPracticeProgress(userId));
   const [active, setActive] = useState<Activity | null>(null);
@@ -111,6 +129,11 @@ export default function StudentPractice() {
               <div className="mb-2 text-4xl">{activity.icon}</div>
               <h3 className="text-lg font-bold text-gray-900">{activity.title[language]}</h3>
               <p className="mb-3 flex-1 text-sm text-gray-500">{activity.description[language]}</p>
+              {activity.kind === 'vocab' && repliedLessons.has(activity.lessonId) && (
+                <p className="mb-3 rounded-lg bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700">
+                  💬 {t('sayTeacherReplied')}
+                </p>
+              )}
               <div className="mb-3 flex items-center justify-between text-sm">
                 <Badge>{activity.lessonId ? t('prFromLesson') : activity.level === 'beginner' ? t('prBeginner') : t('prIntermediate')}</Badge>
                 {best ? <Stars count={starsFor(best.best, best.total)} /> : <span className="text-gray-400">{t('prNotPlayed')}</span>}

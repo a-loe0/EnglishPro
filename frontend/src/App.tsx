@@ -31,6 +31,7 @@ import StudentCourseDetail from './pages/student/CourseDetail';
 import StudentLessons from './pages/student/Lessons';
 import StudentSettings from './pages/student/Settings';
 import TeacherLessonPractice from './pages/teacher/LessonPractice';
+import TeacherPronunciation from './pages/teacher/Pronunciation';
 import StudentPractice from './pages/student/Practice';
 
 export default function App() {
@@ -170,6 +171,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['TEACHER']}>
                 <TeacherLessonPractice />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/pronunciation"
+            element={
+              <ProtectedRoute allowedRoles={['TEACHER']}>
+                <TeacherPronunciation />
               </ProtectedRoute>
             }
           />
