@@ -6,9 +6,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { getVideoService } from '../services/video.service';
 import { getStorageService } from '../services/storage.service';
 import { getQueueService } from '../services/queue.service';
+import { getFFmpegService } from '../services/ffmpeg.service';
 import { ListVideosQuery, CreateVideoRequest } from '../types/video';
 import { handleMulterError } from '../middleware/upload';
-import { lessonPracticeSchema, isEmptyPractice } from '../types/practice';
+import { lessonPracticeSchema, isEmptyPractice, VOCAB_AUDIO_FILENAME } from '../types/practice';
 
 // Store temp file metadata (in production, use Redis)
 const tempFiles = new Map<string, { path: string; filename: string; size: number; mimeType: string; expiresAt: number }>();
@@ -416,7 +417,87 @@ export class VideoController {
       // Saving an empty set clears the lesson's practice.
       const practice = isEmptyPractice(parsed.data) ? null : parsed.data;
       const video = await videoService.setPractice(id, practice);
+
+      // Recordings for words the teacher removed or re-recorded are now unused.
+      const keep = parsed.data.vocab.flatMap((v) => (v.audio ? [v.audio] : []));
+      await getStorageService()
+        .pruneVocabAudio(id, keep)
+        .catch((error) => console.error('Failed to prune vocab audio:', error));
+
       res.json({ id: video.id, practice: video.practice });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/videos/:id/vocab-audio - Upload a vocabulary recording
+   */
+  async uploadVocabAudio(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const user = (req as Request & { user: { userId: string; role: string } }).user;
+
+      if (!req.file) {
+        res.status(400).json({ error: 'No audio file provided' });
+        return;
+      }
+
+      const isOwner = await getVideoService().isOwner(id, user.userId);
+      if (!isOwner) {
+        res.status(403).json({ error: 'You do not have permission to edit this video' });
+        return;
+      }
+
+      const storage = getStorageService();
+      const tempPath = await storage.saveToTemp(req.file.buffer, req.file.originalname);
+      const filename = `${uuidv4()}.mp3`;
+      const dir = storage.getVocabAudioDir(id);
+
+      try {
+        await storage.ensureDir(dir);
+        await getFFmpegService().toMp3(tempPath, join(dir, filename));
+      } catch (error) {
+        console.error('Vocab audio conversion failed:', error);
+        await storage.deleteFile(join(dir, filename));
+        res.status(415).json({ error: 'Could not read that file as audio. Try an MP3 or M4A recording.' });
+        return;
+      } finally {
+        await storage.deleteFile(tempPath);
+      }
+
+      res.status(201).json({ audio: filename });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/videos/:id/vocab-audio/:filename - Play a vocabulary recording
+   */
+  async vocabAudio(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id, filename } = req.params;
+
+      // Both parts come from the URL: only ever serve names this server made.
+      if (!/^[0-9a-f-]{36}$/.test(id) || !VOCAB_AUDIO_FILENAME.test(filename)) {
+        res.status(404).json({ error: 'Recording not found' });
+        return;
+      }
+
+      const audioPath = join(getStorageService().getVocabAudioDir(id), filename);
+      if (!existsSync(audioPath)) {
+        res.status(404).json({ error: 'Recording not found' });
+        return;
+      }
+
+      // sendFile answers Range requests, which Safari needs to play audio.
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      // helmet defaults to same-origin, which blocks <audio> when the site and API are on different origins.
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.sendFile(audioPath, (error) => {
+        if (error && !res.headersSent) next(error);
+      });
     } catch (error) {
       next(error);
     }

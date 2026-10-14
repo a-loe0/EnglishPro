@@ -2,10 +2,17 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '../../test/utils';
 import userEvent from '@testing-library/user-event';
 import { LanguageProvider } from '../../i18n';
-import { getActivity, type QuizActivity, type PositionActivity, type MatchActivity } from '../../data/practice';
+import {
+  getActivity,
+  type QuizActivity,
+  type PositionActivity,
+  type MatchActivity,
+  type VocabActivity,
+} from '../../data/practice';
 import { QuizGame } from './QuizGame';
 import { PositionGame } from './PositionGame';
 import { MatchGame } from './MatchGame';
+import { VocabReview } from './VocabReview';
 
 const wrap = (ui: React.ReactElement) => render(<LanguageProvider>{ui}</LanguageProvider>);
 
@@ -59,5 +66,59 @@ describe('MatchGame', () => {
       await user.click(screen.getByRole('button', { name: pair.word }));
     }
     expect(onFinish).toHaveBeenCalledWith(2, 2);
+  });
+});
+
+describe('VocabReview', () => {
+  const activity: VocabActivity = {
+    id: 'lesson-v1-vocab',
+    kind: 'vocab',
+    category: 'vocab',
+    level: 'beginner',
+    icon: '🔊',
+    lessonId: 'v1',
+    title: { en: 'Vocabulary', zh: '單字複習' },
+    description: { en: '', zh: '' },
+    words: [
+      { word: 'apple', zh: '蘋果', example: 'I eat an apple.', audio: 'a.mp3' },
+      { word: 'bus', zh: '公車' },
+    ],
+  };
+
+  it('plays the teacher\'s recording, hides the meaning until asked, and finishes after the last word', async () => {
+    const play = vi.fn().mockResolvedValue(undefined);
+    const created: string[] = [];
+    vi.stubGlobal(
+      'Audio',
+      class {
+        constructor(src: string) {
+          created.push(src);
+        }
+        play = play;
+        pause = vi.fn();
+      },
+    );
+    const onFinish = vi.fn();
+    wrap(<VocabReview activity={activity} onFinish={onFinish} />);
+    const user = userEvent.setup();
+
+    expect(screen.getByText('apple')).toBeInTheDocument();
+    expect(screen.queryByText('蘋果')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /listen/i }));
+    expect(play).toHaveBeenCalledOnce();
+    expect(created[0]).toMatch(/\/videos\/v1\/vocab-audio\/a\.mp3$/);
+
+    await user.click(screen.getByRole('button', { name: /show meaning/i }));
+    expect(screen.getByText('蘋果')).toBeInTheDocument();
+    expect(screen.getByText('I eat an apple.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /^next$/i }));
+    expect(screen.getByText('bus')).toBeInTheDocument();
+    expect(screen.queryByText('公車')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /finish/i }));
+    expect(onFinish).toHaveBeenCalledExactlyOnceWith(2, 2);
+    vi.unstubAllGlobals();
   });
 });

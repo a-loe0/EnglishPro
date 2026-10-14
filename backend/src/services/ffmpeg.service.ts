@@ -320,6 +320,41 @@ export class FFmpegService extends EventEmitter {
   }
 
   /**
+   * Convert any audio (or the audio track of a video) to a small mono MP3,
+   * which every browser can play.
+   */
+  async toMp3(inputPath: string, outputPath: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const args = [
+        '-i', inputPath,
+        '-vn',
+        '-ac', '1',
+        '-ar', '44100',
+        '-b:a', '96k',
+        '-y',
+        outputPath,
+      ];
+
+      const proc = spawn(this.config.ffmpegPath, args);
+      let stderr = '';
+
+      proc.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      proc.on('close', (code) => {
+        if (code === 0) {
+          resolve(outputPath);
+        } else {
+          reject(new Error(`Audio conversion failed: ${stderr}`));
+        }
+      });
+
+      proc.on('error', reject);
+    });
+  }
+
+  /**
    * Generate video preview (animated GIF or short clip)
    */
   async generatePreview(

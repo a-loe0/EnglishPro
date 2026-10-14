@@ -1,3 +1,4 @@
+export { VocabReview } from './VocabReview';
 export { PositionGame } from './PositionGame';
 export { SortGame } from './SortGame';
 export { ScrambleGame } from './ScrambleGame';

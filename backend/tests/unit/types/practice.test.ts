@@ -23,6 +23,24 @@ describe('lessonPracticeSchema', () => {
     expect(lessonPracticeSchema.safeParse({ quiz: eleven }).success).toBe(false);
   });
 
+  it('accepts vocabulary words, with or without a recording', () => {
+    const parsed = lessonPracticeSchema.parse({
+      vocab: [
+        { word: 'apple', zh: '蘋果', audio: '0b9f6e0e-6d3a-4c0e-9d53-1a2b3c4d5e6f.mp3' },
+        { word: 'bus', zh: '公車', example: 'I take the bus.' },
+      ],
+    });
+    expect(parsed.vocab).toHaveLength(2);
+    expect(isEmptyPractice(parsed)).toBe(false);
+  });
+
+  it('rejects a recording name the server did not make', () => {
+    const bad = (audio: string) =>
+      lessonPracticeSchema.safeParse({ vocab: [{ word: 'apple', zh: '蘋果', audio }] }).success;
+    expect(bad('../../etc/passwd')).toBe(false);
+    expect(bad('apple.mp3')).toBe(false);
+  });
+
   it('treats a single match pair as empty', () => {
     const p = lessonPracticeSchema.parse({ match: [{ word: 'cat', zh: '貓' }] });
     expect(isEmptyPractice(p)).toBe(true);

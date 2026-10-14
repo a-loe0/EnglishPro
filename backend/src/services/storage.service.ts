@@ -11,6 +11,7 @@ export interface StorageConfig {
   thumbnailsPath: string;
   submissionsPath: string;
   avatarsPath: string;
+  vocabAudioPath: string;
   tempPath: string;
 }
 
@@ -30,6 +31,7 @@ export class StorageService {
       thumbnailsPath: config?.thumbnailsPath || process.env.THUMBNAILS_PATH || join(basePath, 'thumbnails'),
       submissionsPath: config?.submissionsPath || process.env.SUBMISSIONS_PATH || join(basePath, 'submissions'),
       avatarsPath: config?.avatarsPath || process.env.AVATARS_PATH || join(basePath, 'avatars'),
+      vocabAudioPath: config?.vocabAudioPath || process.env.VOCAB_AUDIO_PATH || join(basePath, 'vocab-audio'),
       tempPath: config?.tempPath || process.env.TEMP_PATH || join(basePath, 'temp'),
     };
   }
@@ -44,6 +46,7 @@ export class StorageService {
       this.ensureDir(this.config.thumbnailsPath),
       this.ensureDir(this.config.submissionsPath),
       this.ensureDir(this.config.avatarsPath),
+      this.ensureDir(this.config.vocabAudioPath),
       this.ensureDir(this.config.tempPath),
     ]);
   }
@@ -179,6 +182,27 @@ export class StorageService {
    */
   getThumbnailPath(videoId: string): string {
     return join(this.config.thumbnailsPath, `${videoId}.jpg`);
+  }
+
+  /**
+   * Get the directory holding a lesson's vocabulary recordings
+   */
+  getVocabAudioDir(videoId: string): string {
+    return join(this.config.vocabAudioPath, videoId);
+  }
+
+  /**
+   * Delete a lesson's vocabulary recordings that are not in `keep`
+   */
+  async pruneVocabAudio(videoId: string, keep: string[]): Promise<void> {
+    const dir = this.getVocabAudioDir(videoId);
+    let files: string[];
+    try {
+      files = await readdir(dir);
+    } catch {
+      return; // No recordings were ever uploaded for this lesson.
+    }
+    await Promise.all(files.filter((f) => !keep.includes(f)).map((f) => this.deleteFile(join(dir, f))));
   }
 
   /**

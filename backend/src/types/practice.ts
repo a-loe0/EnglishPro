@@ -30,7 +30,19 @@ export const scrambleItemSchema = z.object({
   zh: optionalText(120),
 });
 
+// A word to review. `audio` names a recording the teacher uploaded for this
+// lesson (see POST /api/videos/:id/vocab-audio), always a server-made filename.
+export const VOCAB_AUDIO_FILENAME = /^[0-9a-f-]{36}\.mp3$/;
+
+export const vocabItemSchema = z.object({
+  word: text(60),
+  zh: text(60),
+  example: optionalText(160),
+  audio: z.string().regex(VOCAB_AUDIO_FILENAME).optional(),
+});
+
 export const lessonPracticeSchema = z.object({
+  vocab: z.array(vocabItemSchema).max(30).default([]),
   quiz: z.array(quizItemSchema).max(10).default([]),
   match: z.array(matchItemSchema).max(8).default([]),
   scramble: z.array(scrambleItemSchema).max(8).default([]),
@@ -40,5 +52,5 @@ export type LessonPractice = z.infer<typeof lessonPracticeSchema>;
 
 // A match game needs at least two pairs to be a game.
 export function isEmptyPractice(p: LessonPractice): boolean {
-  return p.quiz.length === 0 && p.match.length < 2 && p.scramble.length === 0;
+  return p.vocab.length === 0 && p.quiz.length === 0 && p.match.length < 2 && p.scramble.length === 0;
 }

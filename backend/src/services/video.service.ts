@@ -259,6 +259,9 @@ export class VideoService {
 
     // Delete thumbnail
     await storage.deleteFile(storage.getThumbnailPath(id));
+
+    // Delete vocabulary recordings
+    await storage.deleteDir(storage.getVocabAudioDir(id));
   }
 
   /**
