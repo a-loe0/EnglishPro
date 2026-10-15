@@ -27,6 +27,14 @@ export default function Home() {
             EnglishGoPro
           </Link>
           <nav className="flex items-center gap-4">
+            {!isTeacher && (
+              <Link
+                to="/login"
+                className="h-10 px-4 text-sm font-medium text-gray-600 hover:text-primary transition-colors flex items-center"
+              >
+                Teacher sign in
+              </Link>
+            )}
             <Link
               to={isTeacher ? '/teacher/dashboard' : lessonsLink}
               className="h-10 px-6 bg-gradient-to-r from-primary to-accent text-white font-medium rounded-lg flex items-center hover:shadow-[0_4px_20px_rgba(99,102,241,0.4)] transition-all"

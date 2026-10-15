@@ -110,7 +110,7 @@ export async function login(
       where: { email: data.email },
     });
 
-    if (!user || isGuestEmail(user.email)) {
+    if (!user || user.role !== 'TEACHER' || isGuestEmail(user.email)) {
       throw createError('Invalid email or password', 401);
     }
 

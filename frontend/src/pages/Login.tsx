@@ -53,7 +53,7 @@ export default function Login() {
               to="/register"
               className="text-sm font-medium text-gray-600 hover:text-primary transition-colors"
             >
-              Create account
+              Teacher account
             </Link>
           </nav>
         </div>
@@ -74,7 +74,7 @@ export default function Login() {
                 Welcome back
               </h1>
               <p className="text-gray-500">
-                Continue your English learning journey
+                Sign in to your teacher account
               </p>
             </div>
 
@@ -187,7 +187,7 @@ export default function Login() {
                 <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">New to EnglishGoPro?</span>
+                <span className="px-4 bg-white text-gray-500">New to teaching with EnglishGoPro?</span>
               </div>
             </div>
 
@@ -196,7 +196,7 @@ export default function Login() {
               to="/register"
               className="flex items-center justify-center w-full h-12 border-2 border-gray-200 rounded-lg font-medium text-gray-700 hover:border-primary hover:text-primary transition-all"
             >
-              Create an account
+              Create a teacher account
             </Link>
           </div>
 
