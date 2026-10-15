@@ -48,3 +48,4 @@ export {
 } from './EmptyState';
 
 export { LanguageToggle } from './LanguageToggle';
+export { PrivateAudio } from './PrivateAudio';

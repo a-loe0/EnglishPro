@@ -98,6 +98,17 @@ export const analyticsLimiter = rateLimit({
   keyGenerator: userOrClientKey,
 });
 
+// Rate limiter for students sending pronunciation recordings. Applied after
+// authentication, so each student (guests included) has their own bucket.
+export const pronunciationLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: Number(process.env.SUBMISSION_RATE_LIMIT_PER_10MIN) || 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'You are sending recordings very fast. Please wait a few minutes.' },
+  keyGenerator: userOrClientKey,
+});
+
 export default {
   generalLimiter,
   authLimiter,
@@ -105,4 +116,5 @@ export default {
   uploadLimiter,
   submissionLimiter,
   analyticsLimiter,
+  pronunciationLimiter,
 };

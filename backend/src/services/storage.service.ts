@@ -206,6 +206,22 @@ export class StorageService {
   }
 
   /**
+   * Get the path of a student's pronunciation recording, or of the teacher's
+   * recorded reply to it
+   */
+  getSubmissionAudioPath(submissionId: string, kind: 'student' | 'feedback' = 'student'): string {
+    return join(this.config.submissionsPath, kind === 'student' ? `${submissionId}.mp3` : `${submissionId}-feedback.mp3`);
+  }
+
+  /**
+   * Delete both recordings of a pronunciation submission
+   */
+  async deleteSubmissionAudio(submissionId: string): Promise<void> {
+    await this.deleteFile(this.getSubmissionAudioPath(submissionId, 'student'));
+    await this.deleteFile(this.getSubmissionAudioPath(submissionId, 'feedback'));
+  }
+
+  /**
    * Delete file
    */
   async deleteFile(path: string): Promise<void> {

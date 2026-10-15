@@ -5,6 +5,7 @@ import compression from 'compression';
 
 import authRoutes from './routes/auth';
 import videoRoutes from './routes/videos';
+import submissionRoutes from './routes/submissions';
 import courseRoutes from './routes/courses';
 import dashboardRoutes from './routes/dashboard';
 import progressRoutes from './routes/progress';
@@ -32,6 +33,7 @@ export function createApp() {
   // API Routes
   app.use('/api/auth', authRoutes);
   app.use('/api/videos', videoRoutes);
+  app.use('/api/submissions', submissionRoutes);
   app.use('/api/courses', courseRoutes);
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api/progress', progressRoutes);

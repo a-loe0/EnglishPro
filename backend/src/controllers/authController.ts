@@ -21,6 +21,9 @@ const prisma = new PrismaClient();
 // and a password hash no password can match, so nobody can sign in as one.
 const GUEST_EMAIL_DOMAIN = '@guest.invalid';
 const GUEST_PASSWORD_HASH = '!guest';
+// A guest keeps this name until they give their own (asked for when they
+// first send the teacher a recording).
+export const GUEST_NAME = 'Guest';
 
 export function isGuestEmail(email: string): boolean {
   return email.toLowerCase().endsWith(GUEST_EMAIL_DOMAIN);
@@ -107,7 +110,7 @@ export async function login(
       where: { email: data.email },
     });
 
-    if (!user || isGuestEmail(user.email)) {
+    if (!user || user.role !== 'TEACHER' || isGuestEmail(user.email)) {
       throw createError('Invalid email or password', 401);
     }
 
@@ -159,7 +162,7 @@ export async function guest(
       data: {
         email: `guest-${randomUUID()}${GUEST_EMAIL_DOMAIN}`,
         passwordHash: GUEST_PASSWORD_HASH,
-        name: 'Guest',
+        name: GUEST_NAME,
         role: 'STUDENT',
       },
       select: {
@@ -297,6 +300,10 @@ export async function updateProfile(
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       throw createError('Name is required', 400);
+    }
+
+    if (name.trim().length > 80) {
+      throw createError('Name is too long', 400);
     }
 
     const user = await prisma.user.update({

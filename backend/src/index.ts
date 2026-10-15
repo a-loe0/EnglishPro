@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 
 import authRoutes from './routes/auth';
 import videoRoutes from './routes/videos';
+import submissionRoutes from './routes/submissions';
 import courseRoutes from './routes/courses';
 import dashboardRoutes from './routes/dashboard';
 import progressRoutes from './routes/progress';
@@ -73,6 +74,7 @@ app.get('/api/health', async (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/videos', videoRoutes);
+app.use('/api/submissions', submissionRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/progress', progressRoutes);
