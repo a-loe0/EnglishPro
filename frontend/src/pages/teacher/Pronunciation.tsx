@@ -3,7 +3,8 @@ import { DashboardLayout } from '../../components/layout';
 import { Button, Card, Spinner, PrivateAudio } from '../../components/common';
 import { teacherSidebarItems } from '../../config/teacherSidebar';
 import { useLanguage } from '../../i18n';
-import { submissionService, type TeacherSubmission } from '../../services/submissions';
+import { submissionService, announcePronunciationChange, MAX_MESSAGES, type TeacherSubmission } from '../../services/submissions';
+import { MessageList, ReplyBox } from '../../components/pronunciation/Conversation';
 import { useAudioRecorder, useClip } from '../../hooks/useAudioRecorder';
 
 type Tab = 'pending' | 'reviewed';
@@ -21,12 +22,17 @@ function SubmissionCard({ submission, onDone }: { submission: TeacherSubmission;
   );
 
   const canSend = !!text.trim() || !!reply || submission.hasFeedbackAudio;
+  // Once the student has answered, the first reply is history and new replies
+  // go into the conversation.
+  const inConversation = submission.messages.length > 0;
+  const studentAnswered = inConversation && !submission.messages[submission.messages.length - 1].fromTeacher;
 
   const send = async () => {
     setBusy(true);
     setError(null);
     try {
       await submissionService.sendFeedback(submission.id, text, reply ?? undefined);
+      announcePronunciationChange();
       onDone();
     } catch (err: unknown) {
       const apiMessage = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
@@ -41,6 +47,7 @@ function SubmissionCard({ submission, onDone }: { submission: TeacherSubmission;
     setError(null);
     try {
       await submissionService.remove(submission.id);
+      announcePronunciationChange();
       onDone();
     } catch {
       setError(t('pnDeleteFailed'));
@@ -55,6 +62,11 @@ function SubmissionCard({ submission, onDone }: { submission: TeacherSubmission;
           <span className="text-lg font-semibold text-gray-900">{submission.student.name}</span>
           <span className="mx-2 text-gray-300">·</span>
           <span className="text-lg font-bold text-primary">{submission.word || t('pnLessonRecording')}</span>
+          {studentAnswered && !submission.reviewedAt && (
+            <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-white">
+              {t('pnStudentAnswered')}
+            </span>
+          )}
         </div>
         <span className="text-sm text-gray-500">
           {submission.video.title} ·{' '}
@@ -73,51 +85,78 @@ function SubmissionCard({ submission, onDone }: { submission: TeacherSubmission;
         />
       </div>
 
-      <textarea
-        className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-        rows={2}
-        maxLength={500}
-        placeholder={t('pnFeedbackPlaceholder')}
-        aria-label={`${t('pnFeedbackPlaceholder')} ${submission.student.name} ${submission.word || t('pnLessonRecording')}`}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
+      {inConversation ? (
+        <div className="mb-3">
+          <div className="rounded-xl bg-green-50 px-3 py-2">
+            <p className="mb-1 text-xs font-semibold text-green-700">{t('pnYourReply')}</p>
+            {submission.feedbackText && <p className="whitespace-pre-wrap text-gray-800">{submission.feedbackText}</p>}
+            {submission.hasFeedbackAudio && (
+              <div className="mt-1">
+                <PrivateAudio
+                  load={() => submissionService.fetchAudio(submission.id, 'feedback')}
+                  playLabel={t('pnPlayReply')}
+                  errorLabel={t('sayPlayFailed')}
+                />
+              </div>
+            )}
+          </div>
+          <MessageList submission={submission} viewer="teacher" studentName={submission.student.name} />
+          {submission.messages.length < MAX_MESSAGES ? (
+            <ReplyBox submissionId={submission.id} placeholder={t('pnReplyToStudent')} onSent={onDone} />
+          ) : (
+            <p className="mt-2 text-sm text-gray-500">{t('convFull')}</p>
+          )}
+        </div>
+      ) : (
+        <>
+        <textarea
+          className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          rows={2}
+          maxLength={500}
+          placeholder={t('pnFeedbackPlaceholder')}
+          aria-label={`${t('pnFeedbackPlaceholder')} ${submission.student.name} ${submission.word || t('pnLessonRecording')}`}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          aria-pressed={recording}
-          disabled={busy}
-          onClick={() => {
-            setError(null);
-            toggle();
-          }}
-          className={
-            recording
-              ? 'rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700'
-              : 'rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50'
-          }
-        >
-          {recording
-            ? `■ ${t('lpStopRecording')}`
-            : `🎙 ${reply || submission.hasFeedbackAudio ? t('pnRecordReplyAgain') : t('pnRecordReply')}`}
-        </button>
-        {reply && !recording && (
-          <>
-            <audio controls src={reply.url} className="h-8 max-w-[14rem]" />
-            <button type="button" onClick={() => setReply(null)} className="text-sm text-red-600 hover:underline">
-              {t('pnRemoveReply')}
-            </button>
-          </>
-        )}
-        {!reply && submission.hasFeedbackAudio && (
-          <PrivateAudio
-            load={() => submissionService.fetchAudio(submission.id, 'feedback')}
-            playLabel={t('pnPlayReply')}
-            errorLabel={t('sayPlayFailed')}
-          />
-        )}
-      </div>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            aria-pressed={recording}
+            disabled={busy}
+            onClick={() => {
+              setError(null);
+              toggle();
+            }}
+            className={
+              recording
+                ? 'rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700'
+                : 'rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+            }
+          >
+            {recording
+              ? `■ ${t('lpStopRecording')}`
+              : `🎙 ${reply || submission.hasFeedbackAudio ? t('pnRecordReplyAgain') : t('pnRecordReply')}`}
+          </button>
+          {reply && !recording && (
+            <>
+              <audio controls src={reply.url} className="h-8 max-w-[14rem]" />
+              <button type="button" onClick={() => setReply(null)} className="text-sm text-red-600 hover:underline">
+                {t('pnRemoveReply')}
+              </button>
+            </>
+          )}
+          {!reply && submission.hasFeedbackAudio && (
+            <PrivateAudio
+              load={() => submissionService.fetchAudio(submission.id, 'feedback')}
+              playLabel={t('pnPlayReply')}
+              errorLabel={t('sayPlayFailed')}
+            />
+          )}
+        </div>
+
+        </>
+      )}
 
       {error && (
         <p role="alert" className="mb-3 text-sm text-red-600">
@@ -126,9 +165,13 @@ function SubmissionCard({ submission, onDone }: { submission: TeacherSubmission;
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="gradient" size="sm" onClick={send} isLoading={busy} disabled={!canSend || recording}>
-          {submission.reviewedAt ? t('pnUpdate') : t('pnSend')}
-        </Button>
+        {inConversation ? (
+          <span />
+        ) : (
+          <Button variant="gradient" size="sm" onClick={send} isLoading={busy} disabled={!canSend || recording}>
+            {submission.reviewedAt ? t('pnUpdate') : t('pnSend')}
+          </Button>
+        )}
         <button type="button" disabled={busy} onClick={remove} className="text-sm text-red-600 hover:underline">
           {t('pnDelete')}
         </button>
@@ -211,7 +254,7 @@ export default function TeacherPronunciation() {
             {items.map((submission) => (
               // Remount when the recording or reply changes so the form resets.
               <SubmissionCard
-                key={`${submission.id}-${submission.createdAt}-${submission.reviewedAt}`}
+                key={`${submission.id}-${submission.createdAt}-${submission.reviewedAt}-${submission.messages.length}`}
                 submission={submission}
                 onDone={() => load(tab)}
               />

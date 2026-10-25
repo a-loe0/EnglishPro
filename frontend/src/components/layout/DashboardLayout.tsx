@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/auth';
 import { Avatar, LanguageToggle } from '../common';
 import { TutorChat } from '../tutor';
+import { submissionService, PRONUNCIATION_CHANGED } from '../../services/submissions';
 
 export interface SidebarItem {
   icon: React.ReactNode;
@@ -24,6 +25,10 @@ export function DashboardLayout({ children, sidebarItems, title }: DashboardLayo
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pronunciationCount = usePronunciationBadge(location.pathname, !!user);
+  const items = sidebarItems.map((item) =>
+    item.href.endsWith('/pronunciation') ? { ...item, badge: pronunciationCount } : item,
+  );
 
   const handleLogout = async () => {
     await logout();
@@ -99,7 +104,7 @@ export function DashboardLayout({ children, sidebarItems, title }: DashboardLayo
         {/* Navigation */}
         <nav className="flex-1 py-4 px-3 overflow-y-auto">
           <ul className="space-y-1">
-            {sidebarItems.map((item) => {
+            {items.map((item) => {
               const isActive = location.pathname === item.href;
               return (
                 <li key={item.href}>
@@ -107,7 +112,7 @@ export function DashboardLayout({ children, sidebarItems, title }: DashboardLayo
                     to={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`
-                      flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                      relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
                       ${isActive
                         ? 'bg-primary/10 text-primary'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
@@ -228,3 +233,30 @@ function LogoutIcon({ className }: { className?: string }) {
 }
 
 export default DashboardLayout;
+
+// Pronunciation menu badge: replies a student hasn't opened, or recordings
+// waiting for the teacher. Rechecks on every page change and whenever
+// something is sent or read.
+function usePronunciationBadge(pathname: string, signedIn: boolean): number {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    let cancelled = false;
+    const refresh = () =>
+      submissionService
+        .badge()
+        .then((n) => !cancelled && setCount(n))
+        .catch(() => {
+          // No badge is better than a broken menu.
+        });
+    refresh();
+    window.addEventListener(PRONUNCIATION_CHANGED, refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(PRONUNCIATION_CHANGED, refresh);
+    };
+  }, [pathname, signedIn]);
+
+  return count;
+}

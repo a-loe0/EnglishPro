@@ -79,7 +79,7 @@ export default function StudentPractice() {
     submissionService
       .mine()
       .then((all) => {
-        if (!cancelled) setRepliedLessons(new Set(all.filter((s) => s.reviewedAt).map((s) => s.videoId)));
+        if (!cancelled) setRepliedLessons(new Set(all.filter((s) => s.word && s.reviewedAt).map((s) => s.videoId)));
       })
       .catch(() => {
         // The page works without it.

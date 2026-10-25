@@ -19,6 +19,8 @@ export default function StudentPronunciation() {
   const [lessons, setLessons] = useState<Video[]>([]);
   // This student's lesson recordings, by lesson id.
   const [sent, setSent] = useState<Record<string, Submission>>({});
+  // Lessons with a teacher reply on one of their vocab words the student hasn't seen.
+  const [unreadWords, setUnreadWords] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
@@ -30,10 +32,14 @@ export default function StudentPronunciation() {
     ])
       .then(([videos, mine]) => {
         if (cancelled) return;
-        setLessons(videos.data);
-        setSent(
-          Object.fromEntries(mine.filter((s) => s.word === LESSON_RECORDING_WORD).map((s) => [s.videoId, s])),
-        );
+        const lessonRecordings = mine.filter((s) => s.word === LESSON_RECORDING_WORD);
+        const wordReplies = new Set(mine.filter((s) => s.word !== LESSON_RECORDING_WORD && s.unread).map((s) => s.videoId));
+        const hasNews = (id: string) =>
+          wordReplies.has(id) || lessonRecordings.some((s) => s.videoId === id && s.unread);
+        // Lessons with a new reply first; otherwise keep the newest-first order.
+        setLessons([...videos.data].sort((a, b) => Number(hasNews(b.id)) - Number(hasNews(a.id))));
+        setSent(Object.fromEntries(lessonRecordings.map((s) => [s.videoId, s])));
+        setUnreadWords(wordReplies);
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -99,6 +105,11 @@ export default function StudentPronunciation() {
                       {wordCount > 0 && (
                         <Link to={`/student/practice?lesson=${lesson.id}`} className="text-primary hover:underline">
                           🔤 {t('spWords')} ({wordCount})
+                          {unreadWords.has(lesson.id) && (
+                            <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-white">
+                              {t('convNew')}
+                            </span>
+                          )}
                         </Link>
                       )}
                     </div>
