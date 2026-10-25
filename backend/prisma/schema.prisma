@@ -123,16 +123,37 @@ model PronunciationSubmission {
   word             String
   feedbackText     String?   @map("feedback_text")
   hasFeedbackAudio Boolean   @default(false) @map("has_feedback_audio")
+  // Last time the teacher replied; null while the student is waiting on her.
   reviewedAt       DateTime? @map("reviewed_at")
+  // When the student last saw the teacher's replies (drives the "new reply" badge).
+  studentSeenAt    DateTime? @map("student_seen_at")
   createdAt        DateTime  @default(now()) @map("created_at")
 
   // Relations
-  student User  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  video   Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  student  User                    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  video    Video                   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  messages PronunciationMessage[]
 
   // Indexes
   @@unique([studentId, videoId, word])
   @@index([videoId])
   @@index([reviewedAt])
   @@map("pronunciation_submissions")
+}
+
+// A follow-up after the teacher's first reply, from either side, so student and
+// teacher can go back and forth about one recording. Audio lives on disk (see
+// StorageService.getMessageAudioPath).
+model PronunciationMessage {
+  id           String   @id @default(uuid())
+  submissionId String   @map("submission_id")
+  fromTeacher  Boolean  @map("from_teacher")
+  text         String?
+  hasAudio     Boolean  @default(false) @map("has_audio")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  submission PronunciationSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId, createdAt])
+  @@map("pronunciation_messages")
 }

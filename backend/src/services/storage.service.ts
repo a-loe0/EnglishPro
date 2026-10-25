@@ -214,6 +214,13 @@ export class StorageService {
   }
 
   /**
+   * Get the path of a recorded follow-up message about a pronunciation submission
+   */
+  getMessageAudioPath(messageId: string): string {
+    return join(this.config.submissionsPath, `msg-${messageId}.mp3`);
+  }
+
+  /**
    * Delete both recordings of a pronunciation submission
    */
   async deleteSubmissionAudio(submissionId: string): Promise<void> {

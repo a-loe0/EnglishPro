@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '../../i18n';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/auth';
-import { submissionService, type Submission } from '../../services/submissions';
+import { submissionService, teacherReplied, announcePronunciationChange, MAX_MESSAGES, type Submission } from '../../services/submissions';
 import { useAudioRecorder, useClip } from '../../hooks/useAudioRecorder';
 import { PrivateAudio } from '../common/PrivateAudio';
+import { MessageList, ReplyBox } from '../pronunciation/Conversation';
 
 interface Props {
   lessonId: string;
@@ -42,6 +43,20 @@ export function SayIt({ lessonId, word, heading, hint, submission, onSent }: Pro
     (recorded) => setClip(recorded),
     () => setError(t('sayMicFailed')),
   );
+
+  // A reply the student hasn't seen: keep the "New reply!" label while they're
+  // here, and tell the server it has been read so the menu badge clears.
+  const [isNew, setIsNew] = useState(false);
+  useEffect(() => {
+    if (!submission?.unread) return;
+    setIsNew(true);
+    submissionService
+      .markSeen(submission.id)
+      .then(announcePronunciationChange)
+      .catch(() => {
+        // The badge just stays until next time.
+      });
+  }, [submission?.id, submission?.unread]);
 
   const send = async () => {
     if (!clip) return;
@@ -91,7 +106,12 @@ export function SayIt({ lessonId, word, heading, hint, submission, onSent }: Pro
 
       {submission && !clip && (
         <div className="mb-4 rounded-xl bg-gray-50 p-3 text-left">
-          {submission.reviewedAt ? (
+          {isNew && (
+            <p className="mb-2 inline-block rounded-full bg-accent px-3 py-0.5 text-xs font-semibold text-white">
+              {t('convNew')}
+            </p>
+          )}
+          {teacherReplied(submission) ? (
             <>
               <p className="mb-1 text-sm font-semibold text-green-700">💬 {t('sayTeacherSays')}</p>
               {submission.feedbackText && (
@@ -109,6 +129,10 @@ export function SayIt({ lessonId, word, heading, hint, submission, onSent }: Pro
           ) : (
             <p className="text-sm text-gray-700">✅ {t('saySent')}</p>
           )}
+          <MessageList submission={submission} viewer="student" />
+          {submission.messages.length > 0 && !submission.reviewedAt && (
+            <p className="mt-2 text-sm text-gray-700">✅ {t('convWaiting')}</p>
+          )}
           <div className="mt-2">
             <PrivateAudio
               key={`${submission.id}-${submission.createdAt}`}
@@ -117,6 +141,12 @@ export function SayIt({ lessonId, word, heading, hint, submission, onSent }: Pro
               errorLabel={t('sayPlayFailed')}
             />
           </div>
+          {teacherReplied(submission) &&
+            (submission.messages.length < MAX_MESSAGES ? (
+              <ReplyBox submissionId={submission.id} placeholder={t('convAnswerTeacher')} onSent={onSent} />
+            ) : (
+              <p className="mt-2 text-sm text-gray-500">{t('convFull')}</p>
+            ))}
         </div>
       )}
 
@@ -125,6 +155,10 @@ export function SayIt({ lessonId, word, heading, hint, submission, onSent }: Pro
         aria-pressed={recording}
         disabled={sending}
         onClick={() => {
+          // A new recording replaces this one and the teacher's replies to it.
+          if (!recording && !clip && submission && teacherReplied(submission) && !window.confirm(t('convConfirmRestart'))) {
+            return;
+          }
           setError(null);
           toggle();
         }}

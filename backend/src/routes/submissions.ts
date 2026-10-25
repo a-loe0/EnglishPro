@@ -19,6 +19,10 @@ const handleUploadError = (err: Error, req: Request, res: Response, next: NextFu
 // and the controller limits each one to the student and the lesson's teacher.
 router.use(authenticate);
 
+// Slows down a student sending too much; the teacher answering a backlog is not limited.
+const studentLimiter = (req: Request, res: Response, next: NextFunction) =>
+  req.user?.role === 'TEACHER' ? next() : pronunciationLimiter(req, res, next);
+
 /**
  * POST /api/submissions
  * A student sends a recording of one vocabulary word (multipart: audio, videoId, word)
@@ -34,6 +38,12 @@ router.post('/', isStudent, pronunciationLimiter, audioUpload.single('audio'), h
 router.get('/mine', isStudent, (req, res, next) => submissionController.mine(req, res, next));
 
 /**
+ * GET /api/submissions/badge
+ * Count for the Pronunciation menu item (teacher: waiting; student: unread replies)
+ */
+router.get('/badge', (req, res, next) => submissionController.badge(req, res, next));
+
+/**
  * GET /api/submissions?status=pending|reviewed
  * Recordings sent for the teacher's lessons
  */
@@ -46,6 +56,26 @@ router.get('/', isTeacher, (req, res, next) => submissionController.list(req, re
 router.put('/:id/feedback', isTeacher, audioUpload.single('audio'), handleUploadError, (req: Request, res: Response, next: NextFunction) =>
   submissionController.feedback(req, res, next)
 );
+
+/**
+ * POST /api/submissions/:id/messages
+ * The student or teacher answers after the teacher's first reply (multipart: text and/or audio)
+ */
+router.post('/:id/messages', studentLimiter, audioUpload.single('audio'), handleUploadError, (req: Request, res: Response, next: NextFunction) =>
+  submissionController.postMessage(req, res, next)
+);
+
+/**
+ * POST /api/submissions/:id/seen
+ * The student opened the teacher's replies
+ */
+router.post('/:id/seen', isStudent, (req, res, next) => submissionController.markSeen(req, res, next));
+
+/**
+ * GET /api/submissions/:id/messages/:messageId/audio
+ * Play a recorded message
+ */
+router.get('/:id/messages/:messageId/audio', (req, res, next) => submissionController.messageAudio(req, res, next));
 
 /**
  * GET /api/submissions/:id/audio and /:id/feedback-audio
