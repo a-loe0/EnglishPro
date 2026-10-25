@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AuthInitializer from './components/auth/AuthInitializer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { ToastContainer, ErrorBoundary } from './components/common';
@@ -17,22 +17,17 @@ import VideoUpload from './pages/teacher/VideoUpload';
 import TeacherVideos from './pages/teacher/Videos';
 import TeacherVideoDetail from './pages/teacher/VideoDetail';
 import TeacherVideoEdit from './pages/teacher/VideoEdit';
-import TeacherCourses from './pages/teacher/Courses';
-import TeacherCourseNew from './pages/teacher/CourseNew';
-import TeacherCourseDetail from './pages/teacher/CourseDetail';
-import TeacherCourseEdit from './pages/teacher/CourseEdit';
 import TeacherAnalytics from './pages/teacher/Analytics';
 import TeacherSettings from './pages/teacher/Settings';
 import TeacherStudents from './pages/teacher/Students';
 import VideoWatch from './pages/student/VideoWatch';
 import StudentAnalytics from './pages/student/Analytics';
-import StudentCourses from './pages/student/Courses';
-import StudentCourseDetail from './pages/student/CourseDetail';
 import StudentLessons from './pages/student/Lessons';
 import StudentSettings from './pages/student/Settings';
 import TeacherLessonPractice from './pages/teacher/LessonPractice';
 import TeacherPronunciation from './pages/teacher/Pronunciation';
 import StudentPractice from './pages/student/Practice';
+import StudentPronunciation from './pages/student/Pronunciation';
 
 export default function App() {
   return (
@@ -93,21 +88,15 @@ export default function App() {
             }
           />
           <Route
-            path="/student/courses"
+            path="/student/pronunciation"
             element={
               <ProtectedRoute allowedRoles={['STUDENT']}>
-                <StudentCourses />
+                <StudentPronunciation />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/student/courses/:courseId"
-            element={
-              <ProtectedRoute allowedRoles={['STUDENT']}>
-                <StudentCourseDetail />
-              </ProtectedRoute>
-            }
-          />
+          {/* Courses were removed; old links go to the lessons. */}
+          <Route path="/student/courses/*" element={<Navigate to="/student/lessons" replace />} />
           <Route
             path="/student/lessons"
             element={
@@ -182,38 +171,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/teacher/courses"
-            element={
-              <ProtectedRoute allowedRoles={['TEACHER']}>
-                <TeacherCourses />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teacher/courses/new"
-            element={
-              <ProtectedRoute allowedRoles={['TEACHER']}>
-                <TeacherCourseNew />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teacher/courses/:courseId"
-            element={
-              <ProtectedRoute allowedRoles={['TEACHER']}>
-                <TeacherCourseDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teacher/courses/:courseId/edit"
-            element={
-              <ProtectedRoute allowedRoles={['TEACHER']}>
-                <TeacherCourseEdit />
-              </ProtectedRoute>
-            }
-          />
+          {/* Courses were removed; old links go to the videos. */}
+          <Route path="/teacher/courses/*" element={<Navigate to="/teacher/videos" replace />} />
           <Route
             path="/teacher/analytics"
             element={

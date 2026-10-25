@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout';
 import { teacherSidebarItems } from '../config/teacherSidebar';
 import { useAuthStore } from '../store/authStore';
@@ -13,9 +14,9 @@ import { dashboardService } from '../services/dashboard';
 import type { TeacherDashboard as TeacherDashboardData } from '../services/dashboard';
 
 // Icons for sidebar
-const CoursesIcon = () => (
+const MicIcon = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-14 0m7 7v4m-4 0h8M12 15a4 4 0 004-4V6a4 4 0 00-8 0v5a4 4 0 004 4z" />
   </svg>
 );
 
@@ -90,23 +91,27 @@ export default function TeacherDashboard() {
         <h2 className="text-2xl font-bold text-gray-900 mb-1">
           Welcome back, {user?.name?.split(' ')[0]}!
         </h2>
-        <p className="text-gray-500">Here's what's happening with your courses today.</p>
+        <p className="text-gray-500">Here's what's happening with your lessons today.</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          title="Active Courses"
-          value={dashboard.stats.totalCourses}
-          icon={<CoursesIcon />}
-          color="primary"
-        />
-        <StatCard
-          title="Total Students"
-          value={dashboard.stats.totalStudents}
-          icon={<StudentsIcon />}
-          color="accent"
-        />
+        <Link to="/teacher/pronunciation" className="block rounded-card focus:outline-none focus:ring-2 focus:ring-primary">
+          <StatCard
+            title="Recordings to Review"
+            value={dashboard.stats.pendingRecordings}
+            icon={<MicIcon />}
+            color="primary"
+          />
+        </Link>
+        <Link to="/teacher/students" className="block rounded-card focus:outline-none focus:ring-2 focus:ring-primary">
+          <StatCard
+            title="Total Students"
+            value={dashboard.stats.totalStudents}
+            icon={<StudentsIcon />}
+            color="accent"
+          />
+        </Link>
         <StatCard
           title="Total Views"
           value={dashboard.stats.totalViews}

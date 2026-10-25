@@ -42,4 +42,7 @@ RUN npx prisma generate
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 8000
-CMD ["node", "dist/index.js"]
+# Apply any new database migrations before starting, so a deploy can never
+# run new code against an old database. migrate deploy is a no-op when there
+# is nothing new.
+CMD ["sh", "-c", "npx prisma migrate deploy && exec node dist/index.js"]

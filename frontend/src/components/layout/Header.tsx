@@ -17,7 +17,6 @@ interface HeaderProps {
 
 const navItems: NavItem[] = [
   { label: 'Home', href: '/' },
-  { label: 'Courses', href: '/courses', requiresAuth: true },
   { label: 'My Dashboard', href: '/dashboard', requiresAuth: true },
 ];
 

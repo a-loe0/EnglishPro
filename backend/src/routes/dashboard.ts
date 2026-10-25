@@ -14,6 +14,12 @@ router.use(authenticate);
 router.get('/teacher', (req, res, next) => dashboardController.getTeacherDashboard(req, res, next));
 
 /**
+ * GET /api/dashboard/teacher/students
+ * Students who watched the teacher's lessons or sent recordings
+ */
+router.get('/teacher/students', (req, res, next) => dashboardController.getTeacherStudents(req, res, next));
+
+/**
  * GET /api/dashboard/student
  * Get student dashboard data
  */

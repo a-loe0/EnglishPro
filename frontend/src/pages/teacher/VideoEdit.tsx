@@ -4,37 +4,28 @@ import { DashboardLayout } from '../../components/layout';
 import { Button, Input, Card, Spinner } from '../../components/common';
 import { videoService } from '../../services/videos';
 import type { Video } from '../../services/videos';
-import { courseService } from '../../services/courses';
-import type { Course } from '../../services/courses';
 import { teacherSidebarItems } from '../../config/teacherSidebar';
 
 export default function VideoEdit() {
   const { videoId } = useParams<{ videoId: string }>();
   const navigate = useNavigate();
   const [video, setVideo] = useState<Video | null>(null);
-  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [courseId, setCourseId] = useState('');
 
   useEffect(() => {
     async function fetchData() {
       if (!videoId) return;
       try {
         setLoading(true);
-        const [videoData, coursesData] = await Promise.all([
-          videoService.getById(videoId),
-          courseService.getMyCourses(),
-        ]);
+        const videoData = await videoService.getById(videoId);
         setVideo(videoData);
-        setCourses(coursesData);
         setTitle(videoData.title);
         setDescription(videoData.description || '');
-        setCourseId(videoData.courseId || '');
       } catch (err) {
         setError('Failed to load video');
         console.error('Error:', err);
@@ -59,7 +50,6 @@ export default function VideoEdit() {
       await videoService.update(videoId, {
         title: title.trim(),
         description: description.trim() || undefined,
-        courseId: courseId || undefined,
       });
       navigate(`/teacher/videos/${videoId}`);
     } catch (err) {
@@ -135,24 +125,6 @@ export default function VideoEdit() {
                 rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Course
-              </label>
-              <select
-                value={courseId}
-                onChange={(e) => setCourseId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-              >
-                <option value="">No course</option>
-                {courses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.title}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <div className="flex justify-end gap-3">

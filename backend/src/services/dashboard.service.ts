@@ -6,6 +6,8 @@ import {
   StudentDashboardResponse,
   ActivityItem,
 } from '../types/dashboard';
+import { summarizeStudents, StudentsResponse } from '../utils/students';
+import { GUEST_NAME } from '../controllers/authController';
 
 export class DashboardService {
   private prisma: PrismaClient;
@@ -69,13 +71,11 @@ export class DashboardService {
       }),
     ]);
 
-    // Get unique student count (students who have watched any of teacher's videos)
-    const uniqueStudents = await this.prisma.progress.groupBy({
-      by: ['studentId'],
-      where: {
-        video: { teacherId },
-      },
-    });
+    // Same people the Students page shows: named students plus guests.
+    const [students, pendingRecordings] = await Promise.all([
+      this.getTeacherStudents(teacherId),
+      this.prisma.pronunciationSubmission.count({ where: { video: { teacherId }, reviewedAt: null } }),
+    ]);
 
     // Get total watch time
     const watchTimeStats = await this.prisma.progress.aggregate({
@@ -103,7 +103,8 @@ export class DashboardService {
     const stats: TeacherDashboardStats = {
       totalCourses,
       totalVideos,
-      totalStudents: uniqueStudents.length,
+      totalStudents: students.students.length + students.guestCount,
+      pendingRecordings,
       totalViews: totalViews._sum.views || 0,
       totalWatchTime: Math.round((watchTimeStats._sum.watchPercentage || 0) / 60),
     };
@@ -118,6 +119,30 @@ export class DashboardService {
         thumbnailUrl: v.thumbnailUrl ? `/api/videos/${v.id}/thumbnail` : null,
       })),
     };
+  }
+
+  /**
+   * Students who watched one of the teacher's lessons or sent her a recording.
+   */
+  async getTeacherStudents(teacherId: string): Promise<StudentsResponse> {
+    const mine = { video: { teacherId } };
+    const student = { select: { name: true } };
+    const [watches, recordings] = await Promise.all([
+      this.prisma.progress.findMany({
+        where: mine,
+        select: { studentId: true, completed: true, lastWatchedAt: true, student },
+      }),
+      this.prisma.pronunciationSubmission.findMany({
+        where: mine,
+        select: { studentId: true, createdAt: true, student },
+      }),
+    ]);
+
+    return summarizeStudents(
+      watches.map((w) => ({ studentId: w.studentId, name: w.student.name, at: w.lastWatchedAt, completed: w.completed })),
+      recordings.map((r) => ({ studentId: r.studentId, name: r.student.name, at: r.createdAt })),
+      GUEST_NAME,
+    );
   }
 
   /**

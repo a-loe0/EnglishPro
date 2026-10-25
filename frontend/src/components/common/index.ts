@@ -41,7 +41,6 @@ export { ErrorBoundary, useErrorHandler } from './ErrorBoundary';
 export {
   EmptyState,
   NoVideosState,
-  NoCoursesState,
   NoSubmissionsState,
   NoResultsState,
   ErrorState,

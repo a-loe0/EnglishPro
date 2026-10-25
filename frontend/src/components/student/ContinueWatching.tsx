@@ -56,9 +56,9 @@ export function ContinueWatching({ videos, isLoading }: ContinueWatchingProps) {
             variant="gradient"
             size="sm"
             className="mt-4"
-            onClick={() => navigate('/student/courses')}
+            onClick={() => navigate('/student/lessons')}
           >
-            {t('browseCourses')}
+            {t('lessons')}
           </Button>
         </div>
       </Card>

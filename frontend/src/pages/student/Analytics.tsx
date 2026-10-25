@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout';
-import { Card, Button } from '../../components/common';
+import { Button } from '../../components/common';
 import {
   ProgressChart,
   CompletionDonut,
@@ -21,15 +20,12 @@ const LessonsIcon = () => (
 );
 
 export default function StudentAnalyticsPage() {
-  const navigate = useNavigate();
   const t = useTranslation();
   const [analytics, setAnalytics] = useState<StudentAnalytics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadAnalytics() {
-      setIsLoading(true);
       setError(null);
       try {
         const data = await analyticsService.getStudentAnalytics();
@@ -37,8 +33,6 @@ export default function StudentAnalyticsPage() {
       } catch (err) {
         console.error('Failed to load analytics:', err);
         setError(t('failedToLoad'));
-      } finally {
-        setIsLoading(false);
       }
     }
 
@@ -133,60 +127,6 @@ export default function StudentAnalyticsPage() {
         />
       </div>
 
-      {/* Course Progress */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('courseProgress')}</h3>
-        {isLoading ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-32 mb-2" />
-                <div className="h-2 bg-gray-200 rounded w-full" />
-              </div>
-            ))}
-          </div>
-        ) : analytics?.courseProgress.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>{t('noCourseProgress')}</p>
-            <Button
-              variant="gradient"
-              size="sm"
-              className="mt-4"
-              onClick={() => navigate('/student/courses')}
-            >
-              {t('browseCourses')}
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {analytics?.courseProgress.map((course) => (
-              <div
-                key={course.courseId}
-                className="p-4 rounded-lg border border-gray-200 hover:border-primary hover:shadow-md cursor-pointer transition-all"
-                onClick={() => navigate(`/student/courses/${course.courseId}`)}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium text-gray-900 truncate">
-                    {course.title}
-                  </span>
-                  <span className="text-sm font-medium text-primary">
-                    {Math.round(course.percentage)}%
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${course.percentage}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  {course.completedVideos} {t('ofVideos')} {course.totalVideos} {t('videosLabel')}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
     </DashboardLayout>
   );
 }

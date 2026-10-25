@@ -163,16 +163,16 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Organized Courses */}
+            {/* Speaking practice */}
             <div className="group bg-white rounded-[12px] p-8 shadow-[0_4px_20px_rgba(99,102,241,0.08)] hover:shadow-[0_8px_40px_rgba(99,102,241,0.15)] transition-all hover:-translate-y-1">
               <div className="w-14 h-14 bg-gradient-to-br from-accent to-accent-dark rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-14 0m7 7v4m-4 0h8M12 15a4 4 0 004-4V6a4 4 0 00-8 0v5a4 4 0 004 4z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Organized Courses</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Practice Speaking</h3>
               <p className="text-gray-500 leading-relaxed">
-                Browse curated courses organized by topic and level. Pick up right where you left off with automatic progress saving.
+                Record yourself after each lesson and send it to your teacher. Get personal feedback on your pronunciation.
               </p>
             </div>
 
@@ -234,7 +234,6 @@ export default function Home() {
               </span>
               <nav className="flex items-center gap-6 text-sm text-gray-500">
                 <Link to="/about" className="hover:text-primary transition-colors">About</Link>
-                <Link to="/courses" className="hover:text-primary transition-colors">Courses</Link>
                 <Link to="/contact" className="hover:text-primary transition-colors">Contact</Link>
                 <Link to="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
                 <Link to="/terms" className="hover:text-primary transition-colors">Terms</Link>
