@@ -54,3 +54,15 @@ export type LessonPractice = z.infer<typeof lessonPracticeSchema>;
 export function isEmptyPractice(p: LessonPractice): boolean {
   return p.vocab.length === 0 && p.quiz.length === 0 && p.match.length < 2 && p.scramble.length === 0;
 }
+
+// A student recording about the whole lesson rather than one vocab word.
+// Stored with an empty `word`, so each student has one per lesson.
+export const LESSON_RECORDING_WORD = '';
+
+// Whether a student may send a recording for `word` in a lesson with this
+// practice. Any lesson takes a lesson recording; a word must be in its vocab.
+export function canRecordWord(practice: unknown, word: string): boolean {
+  if (word === LESSON_RECORDING_WORD) return true;
+  const parsed = lessonPracticeSchema.safeParse(practice ?? {});
+  return parsed.success && parsed.data.vocab.some((v) => v.word === word);
+}

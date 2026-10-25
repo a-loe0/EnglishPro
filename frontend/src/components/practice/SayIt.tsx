@@ -8,7 +8,11 @@ import { PrivateAudio } from '../common/PrivateAudio';
 
 interface Props {
   lessonId: string;
+  // The vocab word being said, or '' for a recording about the whole lesson.
   word: string;
+  // Override the default "Your turn to say it" wording.
+  heading?: string;
+  hint?: string;
   // What the student last sent for this word, if anything.
   submission?: Submission;
   onSent: (submission: Submission) => void;
@@ -22,7 +26,7 @@ const GUEST_NAME = 'Guest';
 
 // The student records themselves saying the word and sends it to the teacher,
 // then sees the teacher's reply here.
-export function SayIt({ lessonId, word, submission, onSent }: Props) {
+export function SayIt({ lessonId, word, heading, hint, submission, onSent }: Props) {
   const { t } = useLanguage();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
@@ -82,8 +86,8 @@ export function SayIt({ lessonId, word, submission, onSent }: Props) {
 
   return (
     <div className="mb-4 rounded-2xl border-2 border-dashed border-gray-200 bg-white px-4 py-5 text-center">
-      <p className="mb-1 font-semibold text-gray-900">🎙 {t('sayHeading')}</p>
-      <p className="mb-3 text-sm text-gray-500">{t('sayHint')}</p>
+      <p className="mb-1 font-semibold text-gray-900">🎙 {heading ?? t('sayHeading')}</p>
+      <p className="mb-3 text-sm text-gray-500">{hint ?? t('sayHint')}</p>
 
       {submission && !clip && (
         <div className="mb-4 rounded-xl bg-gray-50 p-3 text-left">

@@ -117,12 +117,6 @@ export default function VideoDetail() {
             </div>
           )}
 
-          {video.course && (
-            <div className="border-t pt-4 mt-4">
-              <h3 className="font-medium text-gray-900 mb-2">Course</h3>
-              <p className="text-gray-600">{video.course.title}</p>
-            </div>
-          )}
         </Card>
       </div>
     </DashboardLayout>

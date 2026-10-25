@@ -213,20 +213,6 @@ export default function VideoWatch() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Course Info */}
-          {video.course && (
-            <Card className="p-4">
-              <h3 className="font-semibold text-gray-900 mb-2">{t('fromCourse')}</h3>
-              <button
-                onClick={() => navigate(`/student/courses/${video.course?.id}`)}
-                className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <p className="font-medium text-gray-900">{video.course.title}</p>
-                <p className="text-sm text-gray-500 mt-1">{t('viewCourse')}</p>
-              </button>
-            </Card>
-          )}
-
           {/* Actions */}
           <Card className="p-4">
             <h3 className="font-semibold text-gray-900 mb-3">{t('actions')}</h3>
@@ -250,6 +236,13 @@ export default function VideoWatch() {
                   {t('markAsIncomplete')}
                 </Button>
               )}
+              <Button
+                variant="gradient"
+                fullWidth
+                onClick={() => navigate(`/student/pronunciation#${video.id}`)}
+              >
+                🎙 {t('spLessonHeading')}
+              </Button>
             </div>
           </Card>
 

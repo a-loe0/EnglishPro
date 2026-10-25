@@ -110,5 +110,5 @@ jobs:
             echo "IMAGE_TAG=$TAG docker compose up -d"
             echo '```'
             echo ""
-            echo "Add \`docker compose run --rm backend npx prisma migrate deploy\` if the schema changed."
+            echo "The backend applies new database migrations itself when it starts."
           } >> "$GITHUB_STEP_SUMMARY"

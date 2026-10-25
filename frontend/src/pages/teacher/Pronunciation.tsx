@@ -54,7 +54,7 @@ function SubmissionCard({ submission, onDone }: { submission: TeacherSubmission;
         <div>
           <span className="text-lg font-semibold text-gray-900">{submission.student.name}</span>
           <span className="mx-2 text-gray-300">·</span>
-          <span className="text-lg font-bold text-primary">{submission.word}</span>
+          <span className="text-lg font-bold text-primary">{submission.word || t('pnLessonRecording')}</span>
         </div>
         <span className="text-sm text-gray-500">
           {submission.video.title} ·{' '}
@@ -78,7 +78,7 @@ function SubmissionCard({ submission, onDone }: { submission: TeacherSubmission;
         rows={2}
         maxLength={500}
         placeholder={t('pnFeedbackPlaceholder')}
-        aria-label={`${t('pnFeedbackPlaceholder')} ${submission.student.name} ${submission.word}`}
+        aria-label={`${t('pnFeedbackPlaceholder')} ${submission.student.name} ${submission.word || t('pnLessonRecording')}`}
         value={text}
         onChange={(e) => setText(e.target.value)}
       />

@@ -6,6 +6,7 @@ export interface TeacherDashboardStats {
   totalStudents: number;
   totalViews: number;
   totalWatchTime: number;
+  pendingRecordings: number;
 }
 
 export interface ActivityItem {
@@ -57,9 +58,30 @@ export interface StudentDashboard {
   }[];
 }
 
+// Students who watched the teacher's lessons or sent her recordings. Visitors
+// who never gave a name are only counted.
+export interface TeacherStudent {
+  id: string;
+  name: string;
+  lessonsWatched: number;
+  lessonsCompleted: number;
+  recordings: number;
+  lastActive: string;
+}
+
+export interface TeacherStudents {
+  students: TeacherStudent[];
+  guestCount: number;
+}
+
 export const dashboardService = {
   async getTeacherDashboard(): Promise<TeacherDashboard> {
     const response = await api.get('/dashboard/teacher');
+    return response.data;
+  },
+
+  async getTeacherStudents(): Promise<TeacherStudents> {
+    const response = await api.get('/dashboard/teacher/students');
     return response.data;
   },
 

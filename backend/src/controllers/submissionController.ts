@@ -5,13 +5,14 @@ import { randomUUID } from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import { getStorageService } from '../services/storage.service';
 import { getFFmpegService } from '../services/ffmpeg.service';
-import { lessonPracticeSchema } from '../types/practice';
+import { canRecordWord, LESSON_RECORDING_WORD } from '../types/practice';
 import { GUEST_NAME } from './authController';
 
 const prisma = new PrismaClient();
 
-// A word or short sentence, not a speech.
+// A word or short sentence, not a speech. A lesson recording can run longer.
 const MAX_STUDENT_SECONDS = 30;
+const MAX_LESSON_RECORDING_SECONDS = 60;
 const MAX_FEEDBACK_SECONDS = 120;
 const MAX_FEEDBACK_TEXT = 500;
 
@@ -60,7 +61,8 @@ const toResponse = (s: SubmissionRow) => ({
 
 export class SubmissionController {
   /**
-   * POST /api/submissions - A student sends a recording of one word
+   * POST /api/submissions - A student sends a recording of one word, or of
+   * the whole lesson (empty word)
    */
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -83,16 +85,16 @@ export class SubmissionController {
         return;
       }
 
-      // Only words the teacher put in a lesson students can see.
+      // Only lessons students can see; a word must be one the teacher added.
       const video = await prisma.video.findFirst({
         where: { id: videoId, isPublished: true, status: 'READY' },
         select: { practice: true },
       });
-      const practice = lessonPracticeSchema.safeParse(video?.practice ?? {});
-      if (!video || !practice.success || !practice.data.vocab.some((v) => v.word === word)) {
+      if (!video || !canRecordWord(video.practice, word)) {
         res.status(404).json({ error: 'That word is not in this lesson' });
         return;
       }
+      const maxSeconds = word === LESSON_RECORDING_WORD ? MAX_LESSON_RECORDING_SECONDS : MAX_STUDENT_SECONDS;
 
       const key = { studentId_videoId_word: { studentId: userId, videoId, word } };
       const existing = await prisma.pronunciationSubmission.findUnique({ where: key, select: { id: true } });
@@ -100,7 +102,7 @@ export class SubmissionController {
 
       const storage = getStorageService();
       await storage.ensureDir(storage.getStoragePath('submissions'));
-      if (!(await saveRecording(req.file, storage.getSubmissionAudioPath(id), MAX_STUDENT_SECONDS))) {
+      if (!(await saveRecording(req.file, storage.getSubmissionAudioPath(id), maxSeconds))) {
         res.status(415).json({ error: NOT_AUDIO });
         return;
       }

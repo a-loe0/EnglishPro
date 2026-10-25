@@ -1,4 +1,4 @@
-import { lessonPracticeSchema, isEmptyPractice } from '../../../src/types/practice';
+import { lessonPracticeSchema, isEmptyPractice, canRecordWord, LESSON_RECORDING_WORD } from '../../../src/types/practice';
 
 describe('lessonPracticeSchema', () => {
   it('accepts a full practice set and defaults missing sections', () => {
@@ -44,5 +44,21 @@ describe('lessonPracticeSchema', () => {
   it('treats a single match pair as empty', () => {
     const p = lessonPracticeSchema.parse({ match: [{ word: 'cat', zh: '貓' }] });
     expect(isEmptyPractice(p)).toBe(true);
+  });
+});
+
+describe('canRecordWord', () => {
+  const practice = { vocab: [{ word: 'apple', zh: '蘋果' }] };
+
+  it('takes a lesson recording on any lesson, even one with no practice', () => {
+    expect(canRecordWord(null, LESSON_RECORDING_WORD)).toBe(true);
+    expect(canRecordWord({}, LESSON_RECORDING_WORD)).toBe(true);
+    expect(canRecordWord(practice, LESSON_RECORDING_WORD)).toBe(true);
+  });
+
+  it('takes a word only when the teacher added it to the lesson', () => {
+    expect(canRecordWord(practice, 'apple')).toBe(true);
+    expect(canRecordWord(practice, 'banana')).toBe(false);
+    expect(canRecordWord(null, 'apple')).toBe(false);
   });
 });

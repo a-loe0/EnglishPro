@@ -6,17 +6,16 @@ import { Button } from '../components/common';
 import {
   StatsOverview,
   ContinueWatching,
-  CourseProgressList,
 } from '../components/student';
 import { progressService } from '../services/progress';
-import type { Progress, ProgressSummary, CourseProgress } from '../services/progress';
+import type { Progress, ProgressSummary } from '../services/progress';
 import { studentSidebarItems } from '../config/studentSidebar';
 import { useTranslation } from '../i18n';
 
 // Icons for Quick Actions
-const CoursesIcon = () => (
+const MicIcon = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-14 0m7 7v4m-4 0h8M12 15a4 4 0 004-4V6a4 4 0 00-8 0v5a4 4 0 004 4z" />
   </svg>
 );
 
@@ -42,20 +41,17 @@ export default function StudentDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [summary, setSummary] = useState<ProgressSummary | null>(null);
   const [continueWatching, setContinueWatching] = useState<Progress[]>([]);
-  const [courses, setCourses] = useState<CourseProgress[]>([]);
 
   const loadDashboardData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [summaryData, continueData, coursesData] = await Promise.all([
+      const [summaryData, continueData] = await Promise.all([
         progressService.getSummary(),
         progressService.getContinueWatching(4),
-        progressService.getCoursesProgress(),
       ]);
 
       setSummary(summaryData);
       setContinueWatching(continueData);
-      setCourses(coursesData);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
@@ -99,28 +95,23 @@ export default function StudentDashboard() {
         <ContinueWatching videos={continueWatching} isLoading={isLoading} />
       </div>
 
-      {/* Course Progress */}
-      <div className="mt-6">
-        <CourseProgressList courses={courses} isLoading={isLoading} />
-      </div>
-
       {/* Quick Actions */}
       <div className="mt-6 bg-white rounded-xl shadow-card p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('quickActions')}</h3>
         <div className="flex flex-wrap gap-3">
           <Button
             variant="gradient"
-            leftIcon={<CoursesIcon />}
-            onClick={() => navigate('/student/courses')}
-          >
-            {t('myCourses')}
-          </Button>
-          <Button
-            variant="secondary"
             leftIcon={<LessonsIcon />}
             onClick={() => navigate('/student/lessons')}
           >
             {t('lessons')}
+          </Button>
+          <Button
+            variant="secondary"
+            leftIcon={<MicIcon />}
+            onClick={() => navigate('/student/pronunciation')}
+          >
+            {t('pnTitle')}
           </Button>
           <Button
             variant="ghost"

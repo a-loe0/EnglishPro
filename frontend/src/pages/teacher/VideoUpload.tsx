@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout';
 import { Button, Input, Card } from '../../components/common';
 import { VideoUploader, TranscodeProgress } from '../../components/teacher';
 import { videoService } from '../../services/videos';
 import type { Video } from '../../services/videos';
-import { courseService } from '../../services/courses';
-import type { Course } from '../../services/courses';
 import { teacherSidebarItems } from '../../config/teacherSidebar';
 
 type Step = 'upload' | 'details' | 'processing' | 'complete';
@@ -17,26 +15,12 @@ export default function VideoUpload() {
   const [tempId, setTempId] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [createdVideo, setCreatedVideo] = useState<Video | null>(null);
-  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [courseId, setCourseId] = useState('');
-
-  useEffect(() => {
-    async function loadCourses() {
-      try {
-        const data = await courseService.getMyCourses();
-        setCourses(data);
-      } catch (err) {
-        console.error('Failed to load courses:', err);
-      }
-    }
-    loadCourses();
-  }, []);
 
   const handleUploadComplete = (id: string, file: File) => {
     setTempId(id);
@@ -59,7 +43,6 @@ export default function VideoUpload() {
         tempId,
         title: title.trim(),
         description: description.trim() || undefined,
-        courseId: courseId || undefined,
       });
 
       setCreatedVideo(video);
@@ -163,24 +146,6 @@ export default function VideoUpload() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Course (optional)
-                </label>
-                <select
-                  value={courseId}
-                  onChange={(e) => setCourseId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                >
-                  <option value="">No course</option>
-                  {courses.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-600">{error}</p>
@@ -241,7 +206,6 @@ export default function VideoUpload() {
                     setCreatedVideo(null);
                     setTitle('');
                     setDescription('');
-                    setCourseId('');
                   }}
                 >
                   Upload Another

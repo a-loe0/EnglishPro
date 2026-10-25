@@ -24,6 +24,24 @@ export class DashboardController {
   }
 
   /**
+   * GET /api/dashboard/teacher/students - Students who used the teacher's lessons
+   */
+  async getTeacherStudents(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = (req as Request & { user: { userId: string; role: string } }).user;
+
+      if (user.role !== 'TEACHER') {
+        res.status(403).json({ error: 'Only teachers can access this endpoint' });
+        return;
+      }
+
+      res.json(await getDashboardService().getTeacherStudents(user.userId));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * GET /api/dashboard/student - Get student dashboard data
    */
   async getStudentDashboard(req: Request, res: Response, next: NextFunction): Promise<void> {

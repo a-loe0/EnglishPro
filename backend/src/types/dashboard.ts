@@ -4,6 +4,7 @@ export interface TeacherDashboardStats {
   totalStudents: number;
   totalViews: number;
   totalWatchTime: number; // minutes
+  pendingRecordings: number; // student recordings waiting for a reply
 }
 
 export interface ActivityItem {

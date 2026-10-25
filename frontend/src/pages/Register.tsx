@@ -103,7 +103,7 @@ export default function Register() {
                 Create your teacher account
               </h1>
               <p className="text-gray-500">
-                Manage your lessons and courses with EnglishGoPro
+                Manage your video lessons with EnglishGoPro
               </p>
             </div>
 
